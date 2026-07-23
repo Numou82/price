@@ -19,14 +19,16 @@
             --card-bg: #ffffff;
             --text-dark: #333333;
             --border-color: #e0e0e0;
+            --body-bg: #f4f7f6;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f4f7f6;
+            background-color: var(--body-bg);
             color: var(--text-dark);
+            transition: background-color 0.4s ease, color 0.4s ease;
         }
 
         .container {
@@ -46,6 +48,14 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
+            cursor: pointer; /* Indicates header is clickable */
+            user-select: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        header:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
         }
 
         header h1 {
@@ -59,12 +69,22 @@
             font-size: 14px;
         }
 
+        .click-hint {
+            font-size: 11px;
+            background: rgba(255,255,255,0.15);
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-top: 6px;
+            display: inline-block;
+        }
+
         .upload-section {
             background: white;
             padding: 15px 20px;
             border-radius: 8px;
             border: 2px dashed var(--accent);
             text-align: center;
+            color: var(--text-dark);
         }
 
         .upload-section input[type="file"] {
@@ -95,11 +115,12 @@
         }
 
         .kpi-card {
-            background: white;
+            background: var(--card-bg);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             border-left: 5px solid var(--accent);
+            transition: background-color 0.4s ease;
         }
 
         .kpi-card h3 {
@@ -156,10 +177,11 @@
             gap: 15px;
             margin-bottom: 20px;
             flex-wrap: wrap;
-            background: white;
+            background: var(--card-bg);
             padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            transition: background-color 0.4s ease;
         }
 
         .controls input, .controls select {
@@ -182,11 +204,12 @@
 
         /* Tables */
         .table-container {
-            background: white;
+            background: var(--card-bg);
             border-radius: 10px;
             overflow-x: auto;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             margin-bottom: 25px;
+            transition: background-color 0.4s ease;
         }
 
         table {
@@ -202,13 +225,13 @@
         }
 
         th {
-            background-color: #f8f9fa;
+            background-color: var(--bg-light);
             color: var(--primary);
             font-weight: 700;
         }
 
         tr:hover {
-            background-color: #f1f4f6;
+            background-color: rgba(0, 0, 0, 0.02);
         }
 
         .badge {
@@ -230,10 +253,11 @@
         }
 
         .chart-card {
-            background: white;
+            background: var(--card-bg);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: background-color 0.4s ease;
         }
 
         .chart-card h3 {
@@ -241,17 +265,30 @@
             color: var(--primary);
             font-size: 16px;
         }
+
+        /* Dark Theme Adjustments when applicable */
+        body.dark-theme th {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+        }
+        body.dark-theme tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        body.dark-theme .kpi-card h3 {
+            color: #bdc3c7;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
+    <header id="appHeader" title="Click to change background theme">
         <div>
             <h1>F&B Price & Supplier Analysis</h1>
             <p>Master Data & Vendor Insights Dashboard</p>
+            <span class="click-hint">💡 Click header to toggle theme background</span>
         </div>
-        <div class="upload-section">
+        <div class="upload-section" onclick="event.stopPropagation();">
             <label for="excelFile" class="custom-file-upload">📂 Upload New Excel Sheet</label>
             <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
         </div>
@@ -348,6 +385,76 @@
 </div>
 
 <script>
+    // Professional Theme Palette Configurations
+    const themes = [
+        {
+            name: "Default Ice",
+            bodyBg: "#f4f7f6",
+            cardBg: "#ffffff",
+            textDark: "#333333",
+            border: "#e0e0e0",
+            primary: "#2c3e50",
+            isDark: false
+        },
+        {
+            name: "Slate Dark",
+            bodyBg: "#1e293b",
+            cardBg: "#0f172a",
+            textDark: "#f1f5f9",
+            border: "#334155",
+            primary: "#38bdf8",
+            isDark: true
+        },
+        {
+            name: "Executive Navy",
+            bodyBg: "#eef2f6",
+            cardBg: "#ffffff",
+            textDark: "#1e293b",
+            border: "#cbd5e1",
+            primary: "#1e3a8a",
+            isDark: false
+        },
+        {
+            name: "Corporate Charcoal",
+            bodyBg: "#18181b",
+            cardBg: "#27272a",
+            textDark: "#f4f4f5",
+            border: "#3f3f46",
+            primary: "#60a5fa",
+            isDark: true
+        },
+        {
+            name: "Soft Tech",
+            bodyBg: "#f0f4f8",
+            cardBg: "#ffffff",
+            textDark: "#102a43",
+            border: "#bcccdc",
+            primary: "#0b69a3",
+            isDark: false
+        }
+    ];
+
+    let currentThemeIndex = 0;
+
+    // Header Click Event Listener to Cycle Background Themes
+    document.getElementById('appHeader').addEventListener('click', function() {
+        currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+        const theme = themes[currentThemeIndex];
+        
+        const root = document.documentElement;
+        root.style.setProperty('--body-bg', theme.bodyBg);
+        root.style.setProperty('--card-bg', theme.cardBg);
+        root.style.setProperty('--text-dark', theme.textDark);
+        root.style.setProperty('--border-color', theme.border);
+        root.style.setProperty('--primary', theme.primary);
+
+        if (theme.isDark) {
+            document.body.classList.add('dark-theme');
+        } else {
+            document.body.classList.remove('dark-theme');
+        }
+    });
+
     // Embedded initial dataset from Master list.xlsx
     let masterData = [
         {"Item Code":"FB001","Item Name":"Basmati Rice 5kg","UOM":"Bag","Origin":"India","Price (USD)":17.8,"Supplier":"Global Foods Ltd"},
