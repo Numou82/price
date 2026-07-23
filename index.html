@@ -426,17 +426,18 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Requested Item</th>
-                        <th>Quantity</th>
-                        <th>Cheapest Supplier</th>
-                        <th>Unit Price (USD)</th>
-                        <th>Total Cost (USD)</th>
+                        <th>Item Name</th>
+                        <th>Total Request Qty</th>
+                        <th>UOM</th>
+                        <th>Cheap Supplier</th>
+                        <th>Per Cheap Unit Price ($)</th>
+                        <th>Total Price ($)</th>
                         <th>Status</th>
                     </tr>
                 </thead>
                 <tbody id="requestTableBody">
                     <tr>
-                        <td colspan="6" style="text-align:center; color:#888;">No store request uploaded yet. Upload a sheet above to scan for the cheapest suppliers.</td>
+                        <td colspan="7" style="text-align:center; color:#888;">No store request uploaded yet. Upload a sheet above to scan for the cheapest suppliers.</td>
                     </tr>
                 </tbody>
             </table>
@@ -572,6 +573,11 @@
     let processedRequestData = [];
     let countChartInstance = null;
     let priceChartInstance = null;
+
+    // Load initial dashboard components
+    document.addEventListener("DOMContentLoaded", () => {
+        initDashboard(masterData);
+    });
 
     // Tab Switcher
     function switchTab(tabId, btn) {
@@ -773,85 +779,100 @@
         tbody.innerHTML = '';
 
         requestData.forEach(req => {
-            // Flexible keys for Item Name and Quantity
             const reqItem = req['Item Name'] || req['Item'] || req['Description'] || '';
             const qty = parseFloat(req['Quantity'] || req['Qty'] || req['QTY'] || 1);
 
             if (!reqItem) return;
 
-            // Find all matching suppliers in masterData
+            // Find matching items in masterData
             const matches = masterData.filter(m => 
                 (m['Item Name'] || '').toLowerCase().trim() === reqItem.toLowerCase().trim()
             );
 
             if (matches.length > 0) {
-                // Sort by price ascending to find cheapest
-                matches.sort((a, b) => parseFloat(a['Price (USD)']) - parseFloat(b['Price (USD)']));
-                const cheapest = matches[0];
-                const unitPrice = parseFloat(cheapest['Price (USD)']);
+                // Find lowest unit price
+                const cheapestMatch = matches.reduce((min, curr) => 
+                    (parseFloat(curr['Price (USD)']) < parseFloat(min['Price (USD)'])) ? curr : min
+                , matches[0]);
+
+                const unitPrice = parseFloat(cheapestMatch['Price (USD)']);
                 const totalPrice = unitPrice * qty;
+                const uom = cheapestMatch['UOM'] || req['UOM'] || 'N/A';
+                const cheapSupplier = cheapestMatch['Supplier'];
 
-                const rowObj = {
-                    "Item Name": cheapest['Item Name'],
-                    "Quantity": qty,
-                    "Cheapest Supplier": cheapest['Supplier'],
-                    "Unit Price (USD)": unitPrice,
-                    "Total Cost (USD)": totalPrice,
-                    "Status": "Matched"
-                };
-                processedRequestData.push(rowObj);
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${cheapest['Item Name']}</strong></td>
-                        <td>${qty}</td>
-                        <td><span class="badge badge-green">${cheapest['Supplier']}</span></td>
-                        <td>$${unitPrice.toFixed(2)}</td>
-                        <td><strong>$${totalPrice.toFixed(2)}</strong></td>
-                        <td><span class="badge badge-blue">Found (${matches.length} quotes)</span></td>
-                    </tr>
-                `;
-            } else {
-                const rowObj = {
+                processedRequestData.push({
                     "Item Name": reqItem,
-                    "Quantity": qty,
-                    "Cheapest Supplier": "N/A",
-                    "Unit Price (USD)": 0,
-                    "Total Cost (USD)": 0,
-                    "Status": "Not Found"
-                };
-                processedRequestData.push(rowObj);
+                    "Total Request Qty": qty,
+                    "UOM": uom,
+                    "Cheap Supplier": cheapSupplier,
+                    "Per Cheap Unit Price": unitPrice,
+                    "Total Price": totalPrice,
+                    "Found": true
+                });
 
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${reqItem}</strong></td>
                         <td>${qty}</td>
-                        <td><em>Not Found</em></td>
+                        <td>${uom}</td>
+                        <td><span class="badge badge-green">${cheapSupplier}</span></td>
+                        <td>$${unitPrice.toFixed(2)}</td>
+                        <td><strong>$${totalPrice.toFixed(2)}</strong></td>
+                        <td><span class="badge badge-blue">Matched</span></td>
+                    </tr>
+                `;
+            } else {
+                processedRequestData.push({
+                    "Item Name": reqItem,
+                    "Total Request Qty": qty,
+                    "UOM": req['UOM'] || 'N/A',
+                    "Cheap Supplier": "N/A",
+                    "Per Cheap Unit Price": 0,
+                    "Total Price": 0,
+                    "Found": false
+                });
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${reqItem}</strong></td>
+                        <td>${qty}</td>
+                        <td>${req['UOM'] || 'N/A'}</td>
+                        <td><span class="badge badge-red">No Supplier Found</span></td>
                         <td>-</td>
                         <td>-</td>
-                        <td><span class="badge badge-red">No Supplier Match</span></td>
+                        <td><span class="badge badge-red">Missing</span></td>
                     </tr>
                 `;
             }
         });
 
-        document.getElementById('exportBtn').style.display = 'inline-block';
+        if (processedRequestData.length > 0) {
+            document.getElementById('exportBtn').style.display = 'inline-block';
+        }
     }
 
-    // Export Analysis to Excel
+    // Export function formatted per requested column structure
     function exportCheapestQuote() {
-        if (!processedRequestData.length) return;
+        if (!processedRequestData || processedRequestData.length === 0) {
+            alert('No processed request data available for export.');
+            return;
+        }
 
-        const worksheet = XLSX.utils.json_to_sheet(processedRequestData);
+        const exportRows = processedRequestData.map(item => ({
+            "Item Name": item["Item Name"],
+            "Total Request Qty": item["Total Request Qty"],
+            "UOM": item["UOM"],
+            "Cheap Supplier": item["Cheap Supplier"],
+            "Per Cheap Unit Price": item["Per Cheap Unit Price"],
+            "Total Price": item["Total Price"]
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportRows);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Cheapest Suppliers Quote");
 
         XLSX.writeFile(workbook, "Cheapest_Supplier_Quote.xlsx");
     }
-
-    // Initialize with Master List
-    initDashboard(masterData);
 </script>
-
 </body>
 </html>
