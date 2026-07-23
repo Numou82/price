@@ -232,7 +232,7 @@
         }
 
         .kpi-card .value {
-            font-size: 26px;
+            font-size: 24px;
             font-weight: bold;
             color: var(--primary);
         }
@@ -484,7 +484,7 @@
         </div>
     </header>
 
-    <!-- Key Metrics (Interactive Clickable Cards) -->
+    <!-- Key Metrics -->
     <div class="kpi-grid">
         <div class="kpi-card" style="border-left-color: #3498db;" onclick="switchTab('items-tab', document.querySelectorAll('.tab-btn')[1])">
             <h3>Total Master Items</h3>
@@ -496,7 +496,7 @@
         </div>
         <div class="kpi-card" style="border-left-color: #f39c12;" onclick="switchTab('items-tab', document.querySelectorAll('.tab-btn')[1])">
             <h3>Average Item Price</h3>
-            <div class="value" id="kpiAvgPrice">$0.00</div>
+            <div class="value" id="kpiAvgPrice">0.000 KWD</div>
         </div>
         <div class="kpi-card" style="border-left-color: #9b59b6;" onclick="showOriginsModal()">
             <h3>Total Origins (Click to View)</h3>
@@ -519,7 +519,7 @@
                 <canvas id="supplierCountChart"></canvas>
             </div>
             <div class="chart-card">
-                <h3>Average Price ($) by Supplier</h3>
+                <h3>Average Price (KWD) by Supplier</h3>
                 <canvas id="supplierPriceChart"></canvas>
             </div>
         </div>
@@ -530,9 +530,9 @@
                     <tr>
                         <th>Supplier Name</th>
                         <th>Items Supplied (Click to view)</th>
-                        <th>Avg Item Price ($)</th>
-                        <th>Min Price ($)</th>
-                        <th>Max Price ($)</th>
+                        <th>Avg Item Price (KWD)</th>
+                        <th>Min Price (KWD)</th>
+                        <th>Max Price (KWD)</th>
                         <th>Primary Origins</th>
                     </tr>
                 </thead>
@@ -563,7 +563,7 @@
                         <th>Item Name</th>
                         <th>UOM</th>
                         <th>Origin</th>
-                        <th>Price (USD)</th>
+                        <th>Price (KWD)</th>
                         <th>Supplier</th>
                     </tr>
                 </thead>
@@ -596,8 +596,8 @@
                         <th>Total Request Qty</th>
                         <th>UOM</th>
                         <th>Cheap Supplier</th>
-                        <th>Per Cheap Unit Price ($)</th>
-                        <th>Total Price ($)</th>
+                        <th>Per Cheap Unit Price (KWD)</th>
+                        <th>Total Price (KWD)</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -659,6 +659,10 @@
         }
     };
 
+    function getItemPrice(item) {
+        return parseFloat(item['Price (KWD)'] || item['Price (USD)'] || item['Price'] || 0);
+    }
+
     // Show Active Suppliers Modal
     function showActiveSuppliersModal() {
         const suppliers = [...new Set(masterData.map(d => d.Supplier))].sort();
@@ -682,7 +686,7 @@
         showModal(`Total Origins (${origins.length})`, listHtml);
     }
 
-    // Show Items supplied by specific vendor (Fixed: Includes Item Origin & Clean Table HTML)
+    // Show Items supplied by specific vendor
     function showSupplierItemsModal(supplierName) {
         const items = masterData.filter(m => m.Supplier === supplierName);
         let tableHtml = `
@@ -704,7 +708,7 @@
                     <td style="padding:10px;"><strong>${i['Item Name']}</strong></td>
                     <td style="padding:10px;">${i['UOM']}</td>
                     <td style="padding:10px;"><span class="badge badge-green">${i['Origin']}</span></td>
-                    <td style="padding:10px;">$${parseFloat(i['Price (USD)']).toFixed(2)}</td>
+                    <td style="padding:10px;">${getItemPrice(i).toFixed(3)} KWD</td>
                 </tr>`;
         });
         tableHtml += `</tbody></table>`;
@@ -741,56 +745,56 @@
     });
 
     let masterData = [
-        {"Item Code":"FB001","Item Name":"Basmati Rice 5kg","UOM":"Bag","Origin":"India","Price (USD)":17.8,"Supplier":"Global Foods Ltd"},
-        {"Item Code":"FB002","Item Name":"Basmati Rice 5kg","UOM":"Bag","Origin":"Pakistan","Price (USD)":15.9,"Supplier":"Asia Grain Supply"},
-        {"Item Code":"FB003","Item Name":"Basmati Rice 5kg Premium","UOM":"Bag","Origin":"India","Price (USD)":22.5,"Supplier":"Premium Harvest"},
-        {"Item Code":"FB004","Item Name":"Jasmine Rice 5kg","UOM":"Bag","Origin":"Thailand","Price (USD)":19.2,"Supplier":"Thai Food Supply"},
-        {"Item Code":"FB005","Item Name":"Jasmine Rice 5kg","UOM":"Bag","Origin":"Vietnam","Price (USD)":17.6,"Supplier":"Mekong Foods"},
-        {"Item Code":"FB006","Item Name":"Wheat Flour","UOM":"Kg","Origin":"Australia","Price (USD)":1.75,"Supplier":"Grain World"},
-        {"Item Code":"FB007","Item Name":"Wheat Flour","UOM":"Kg","Origin":"India","Price (USD)":1.35,"Supplier":"Sunrise Trading"},
-        {"Item Code":"FB008","Item Name":"White Sugar","UOM":"Kg","Origin":"Brazil","Price (USD)":1.2,"Supplier":"Sweet Harvest Co"},
-        {"Item Code":"FB009","Item Name":"White Sugar","UOM":"Kg","Origin":"Thailand","Price (USD)":1.05,"Supplier":"Golden Sweet Ltd"},
-        {"Item Code":"FB010","Item Name":"Sea Salt","UOM":"Kg","Origin":"Australia","Price (USD)":0.85,"Supplier":"Ocean Foods"},
-        {"Item Code":"FB011","Item Name":"Black Pepper Whole","UOM":"Kg","Origin":"Vietnam","Price (USD)":11.8,"Supplier":"Spice Masters"},
-        {"Item Code":"FB012","Item Name":"Black Pepper Whole","UOM":"Kg","Origin":"India","Price (USD)":13.5,"Supplier":"Royal Spices"},
-        {"Item Code":"FB013","Item Name":"Olive Oil Extra Virgin","UOM":"Litre","Origin":"Spain","Price (USD)":9.9,"Supplier":"Mediterranean Imports"},
-        {"Item Code":"FB014","Item Name":"Olive Oil Extra Virgin","UOM":"Litre","Origin":"Italy","Price (USD)":12.8,"Supplier":"Italian Pantry"},
-        {"Item Code":"FB015","Item Name":"Sunflower Oil","UOM":"Litre","Origin":"Ukraine","Price (USD)":3.2,"Supplier":"Golden Oil Trading"},
-        {"Item Code":"FB016","Item Name":"Sunflower Oil","UOM":"Litre","Origin":"Turkey","Price (USD)":3.8,"Supplier":"Anatolia Foods"},
-        {"Item Code":"FB017","Item Name":"Soy Sauce","UOM":"Bottle","Origin":"Japan","Price (USD)":4.1,"Supplier":"Sakura Foods"},
-        {"Item Code":"FB018","Item Name":"Soy Sauce","UOM":"Bottle","Origin":"China","Price (USD)":2.9,"Supplier":"East Asia Foods"},
-        {"Item Code":"FB019","Item Name":"Tomato Ketchup","UOM":"Bottle","Origin":"USA","Price (USD)":3.1,"Supplier":"Fresh Choice Supply"},
-        {"Item Code":"FB020","Item Name":"Tomato Ketchup","UOM":"Bottle","Origin":"Malaysia","Price (USD)":2.5,"Supplier":"Kitchen Essentials"},
-        {"Item Code":"FB021","Item Name":"Mayonnaise","UOM":"Jar","Origin":"Netherlands","Price (USD)":5.1,"Supplier":"Dutch Foods BV"},
-        {"Item Code":"FB022","Item Name":"Mayonnaise","UOM":"Jar","Origin":"USA","Price (USD)":4.4,"Supplier":"Fresh Choice Supply"},
-        {"Item Code":"FB023","Item Name":"Canned Tuna","UOM":"Can","Origin":"Philippines","Price (USD)":2.3,"Supplier":"Ocean Catch Ltd"},
-        {"Item Code":"FB024","Item Name":"Canned Tuna","UOM":"Can","Origin":"Thailand","Price (USD)":1.95,"Supplier":"Thai Food Supply"},
-        {"Item Code":"FB025","Item Name":"Coconut Milk","UOM":"Can","Origin":"Thailand","Price (USD)":2.6,"Supplier":"Tropical Harvest"},
-        {"Item Code":"FB026","Item Name":"Coconut Milk","UOM":"Can","Origin":"Indonesia","Price (USD)":2.2,"Supplier":"Island Foods"},
-        {"Item Code":"FB027","Item Name":"Fresh Milk","UOM":"Litre","Origin":"New Zealand","Price (USD)":2.4,"Supplier":"Dairy Fresh Ltd"},
-        {"Item Code":"FB028","Item Name":"Fresh Milk","UOM":"Litre","Origin":"Australia","Price (USD)":2.1,"Supplier":"Southern Dairy"},
-        {"Item Code":"FB029","Item Name":"Cheddar Cheese","UOM":"Kg","Origin":"New Zealand","Price (USD)":11.0,"Supplier":"Dairy Fresh Ltd"},
-        {"Item Code":"FB030","Item Name":"Cheddar Cheese Premium","UOM":"Kg","Origin":"England","Price (USD)":15.8,"Supplier":"English Dairy Co"},
-        {"Item Code":"FB031","Item Name":"Butter Unsalted","UOM":"Kg","Origin":"Denmark","Price (USD)":8.7,"Supplier":"Nordic Dairy"},
-        {"Item Code":"FB032","Item Name":"Eggs Grade A","UOM":"Dozen","Origin":"Malaysia","Price (USD)":3.7,"Supplier":"Farm Fresh Produce"},
-        {"Item Code":"FB033","Item Name":"Chicken Breast","UOM":"Kg","Origin":"Brazil","Price (USD)":6.8,"Supplier":"Prime Poultry"},
-        {"Item Code":"FB034","Item Name":"Chicken Breast","UOM":"Kg","Origin":"USA","Price (USD)":8.9,"Supplier":"American Meats"},
-        {"Item Code":"FB035","Item Name":"Beef Striploin","UOM":"Kg","Origin":"Australia","Price (USD)":24.8,"Supplier":"Aussie Meat Export"},
-        {"Item Code":"FB036","Item Name":"Beef Striploin Wagyu","UOM":"Kg","Origin":"Japan","Price (USD)":78.5,"Supplier":"Kobe Premium Foods"},
-        {"Item Code":"FB037","Item Name":"Salmon Fillet","UOM":"Kg","Origin":"Norway","Price (USD)":21.8,"Supplier":"Nordic Seafood"},
-        {"Item Code":"FB038","Item Name":"Salmon Fillet","UOM":"Kg","Origin":"Chile","Price (USD)":17.9,"Supplier":"Pacific Seafood"},
-        {"Item Code":"FB039","Item Name":"Shrimp Medium","UOM":"Kg","Origin":"Vietnam","Price (USD)":14.2,"Supplier":"Ocean Catch Ltd"},
-        {"Item Code":"FB040","Item Name":"Shrimp Medium","UOM":"Kg","Origin":"India","Price (USD)":12.9,"Supplier":"Blue Ocean Exports"},
-        {"Item Code":"FB041","Item Name":"Potatoes","UOM":"Kg","Origin":"Netherlands","Price (USD)":1.45,"Supplier":"Dutch Agro Supply"},
-        {"Item Code":"FB042","Item Name":"Potatoes","UOM":"Kg","Origin":"India","Price (USD)":0.95,"Supplier":"Fresh Harvest Traders"},
-        {"Item Code":"FB043","Item Name":"Tomatoes","UOM":"Kg","Origin":"Spain","Price (USD)":2.4,"Supplier":"Iberia Produce"},
-        {"Item Code":"FB044","Item Name":"Tomatoes","UOM":"Kg","Origin":"Turkey","Price (USD)":1.85,"Supplier":"Anatolia Foods"},
-        {"Item Code":"FB045","Item Name":"Apples Gala","UOM":"Kg","Origin":"USA","Price (USD)":3.4,"Supplier":"Orchard Fruits Inc"},
-        {"Item Code":"FB046","Item Name":"Apples Gala","UOM":"Kg","Origin":"New Zealand","Price (USD)":4.2,"Supplier":"Kiwi Fruit Export"},
-        {"Item Code":"FB047","Item Name":"Coffee Beans Arabica","UOM":"Kg","Origin":"Colombia","Price (USD)":15.5,"Supplier":"Coffee Traders Intl"},
-        {"Item Code":"FB048","Item Name":"Coffee Beans Arabica Premium","UOM":"Kg","Origin":"Ethiopia","Price (USD)":22.8,"Supplier":"Ethiopian Coffee Co"},
-        {"Item Code":"FB049","Item Name":"Mineral Water 500ml","UOM":"Bottle","Origin":"France","Price (USD)":0.85,"Supplier":"Pure Spring Co"},
-        {"Item Code":"FB050","Item Name":"Mineral Water 500ml","UOM":"Bottle","Origin":"Local","Price (USD)":0.35,"Supplier":"City Beverage Supply"}
+        {"Item Code":"FB001","Item Name":"Basmati Rice 5kg","UOM":"Bag","Origin":"India","Price (KWD)":5.250,"Supplier":"Global Foods Ltd"},
+        {"Item Code":"FB002","Item Name":"Basmati Rice 5kg","UOM":"Bag","Origin":"Pakistan","Price (KWD)":4.850,"Supplier":"Asia Grain Supply"},
+        {"Item Code":"FB003","Item Name":"Basmati Rice 5kg Premium","UOM":"Bag","Origin":"India","Price (KWD)":6.750,"Supplier":"Premium Harvest"},
+        {"Item Code":"FB004","Item Name":"Jasmine Rice 5kg","UOM":"Bag","Origin":"Thailand","Price (KWD)":5.800,"Supplier":"Thai Food Supply"},
+        {"Item Code":"FB005","Item Name":"Jasmine Rice 5kg","UOM":"Bag","Origin":"Vietnam","Price (KWD)":5.300,"Supplier":"Mekong Foods"},
+        {"Item Code":"FB006","Item Name":"Wheat Flour","UOM":"Kg","Origin":"Australia","Price (KWD)":0.520,"Supplier":"Grain World"},
+        {"Item Code":"FB007","Item Name":"Wheat Flour","UOM":"Kg","Origin":"India","Price (KWD)":0.410,"Supplier":"Sunrise Trading"},
+        {"Item Code":"FB008","Item Name":"White Sugar","UOM":"Kg","Origin":"Brazil","Price (KWD)":0.360,"Supplier":"Sweet Harvest Co"},
+        {"Item Code":"FB009","Item Name":"White Sugar","UOM":"Kg","Origin":"Thailand","Price (KWD)":0.320,"Supplier":"Golden Sweet Ltd"},
+        {"Item Code":"FB010","Item Name":"Sea Salt","UOM":"Kg","Origin":"Australia","Price (KWD)":0.250,"Supplier":"Ocean Foods"},
+        {"Item Code":"FB011","Item Name":"Black Pepper Whole","UOM":"Kg","Origin":"Vietnam","Price (KWD)":3.600,"Supplier":"Spice Masters"},
+        {"Item Code":"FB012","Item Name":"Black Pepper Whole","UOM":"Kg","Origin":"India","Price (KWD)":4.100,"Supplier":"Royal Spices"},
+        {"Item Code":"FB013","Item Name":"Olive Oil Extra Virgin","UOM":"Litre","Origin":"Spain","Price (KWD)":3.000,"Supplier":"Mediterranean Imports"},
+        {"Item Code":"FB014","Item Name":"Olive Oil Extra Virgin","UOM":"Litre","Origin":"Italy","Price (KWD)":3.900,"Supplier":"Italian Pantry"},
+        {"Item Code":"FB015","Item Name":"Sunflower Oil","UOM":"Litre","Origin":"Ukraine","Price (KWD)":0.970,"Supplier":"Golden Oil Trading"},
+        {"Item Code":"FB016","Item Name":"Sunflower Oil","UOM":"Litre","Origin":"Turkey","Price (KWD)":1.150,"Supplier":"Anatolia Foods"},
+        {"Item Code":"FB017","Item Name":"Soy Sauce","UOM":"Bottle","Origin":"Japan","Price (KWD)":1.250,"Supplier":"Sakura Foods"},
+        {"Item Code":"FB018","Item Name":"Soy Sauce","UOM":"Bottle","Origin":"China","Price (KWD)":0.880,"Supplier":"East Asia Foods"},
+        {"Item Code":"FB019","Item Name":"Tomato Ketchup","UOM":"Bottle","Origin":"USA","Price (KWD)":0.950,"Supplier":"Fresh Choice Supply"},
+        {"Item Code":"FB020","Item Name":"Tomato Ketchup","UOM":"Bottle","Origin":"Malaysia","Price (KWD)":0.750,"Supplier":"Kitchen Essentials"},
+        {"Item Code":"FB021","Item Name":"Mayonnaise","UOM":"Jar","Origin":"Netherlands","Price (KWD)":1.550,"Supplier":"Dutch Foods BV"},
+        {"Item Code":"FB022","Item Name":"Mayonnaise","UOM":"Jar","Origin":"USA","Price (KWD)":1.350,"Supplier":"Fresh Choice Supply"},
+        {"Item Code":"FB023","Item Name":"Canned Tuna","UOM":"Can","Origin":"Philippines","Price (KWD)":0.700,"Supplier":"Ocean Catch Ltd"},
+        {"Item Code":"FB024","Item Name":"Canned Tuna","UOM":"Can","Origin":"Thailand","Price (KWD)":0.600,"Supplier":"Thai Food Supply"},
+        {"Item Code":"FB025","Item Name":"Coconut Milk","UOM":"Can","Origin":"Thailand","Price (KWD)":0.800,"Supplier":"Tropical Harvest"},
+        {"Item Code":"FB026","Item Name":"Coconut Milk","UOM":"Can","Origin":"Indonesia","Price (KWD)":0.670,"Supplier":"Island Foods"},
+        {"Item Code":"FB027","Item Name":"Fresh Milk","UOM":"Litre","Origin":"New Zealand","Price (KWD)":0.730,"Supplier":"Dairy Fresh Ltd"},
+        {"Item Code":"FB028","Item Name":"Fresh Milk","UOM":"Litre","Origin":"Australia","Price (KWD)":0.640,"Supplier":"Southern Dairy"},
+        {"Item Code":"FB029","Item Name":"Cheddar Cheese","UOM":"Kg","Origin":"New Zealand","Price (KWD)":3.350,"Supplier":"Dairy Fresh Ltd"},
+        {"Item Code":"FB030","Item Name":"Cheddar Cheese Premium","UOM":"Kg","Origin":"England","Price (KWD)":4.800,"Supplier":"English Dairy Co"},
+        {"Item Code":"FB031","Item Name":"Butter Unsalted","UOM":"Kg","Origin":"Denmark","Price (KWD)":2.650,"Supplier":"Nordic Dairy"},
+        {"Item Code":"FB032","Item Name":"Eggs Grade A","UOM":"Dozen","Origin":"Malaysia","Price (KWD)":1.120,"Supplier":"Farm Fresh Produce"},
+        {"Item Code":"FB033","Item Name":"Chicken Breast","UOM":"Kg","Origin":"Brazil","Price (KWD)":2.050,"Supplier":"Prime Poultry"},
+        {"Item Code":"FB034","Item Name":"Chicken Breast","UOM":"Kg","Origin":"USA","Price (KWD)":2.700,"Supplier":"American Meats"},
+        {"Item Code":"FB035","Item Name":"Beef Striploin","UOM":"Kg","Origin":"Australia","Price (KWD)":7.550,"Supplier":"Aussie Meat Export"},
+        {"Item Code":"FB036","Item Name":"Beef Striploin Wagyu","UOM":"Kg","Origin":"Japan","Price (KWD)":23.900,"Supplier":"Kobe Premium Foods"},
+        {"Item Code":"FB037","Item Name":"Salmon Fillet","UOM":"Kg","Origin":"Norway","Price (KWD)":6.650,"Supplier":"Nordic Seafood"},
+        {"Item Code":"FB038","Item Name":"Salmon Fillet","UOM":"Kg","Origin":"Chile","Price (KWD)":5.450,"Supplier":"Pacific Seafood"},
+        {"Item Code":"FB039","Item Name":"Shrimp Medium","UOM":"Kg","Origin":"Vietnam","Price (KWD)":4.300,"Supplier":"Ocean Catch Ltd"},
+        {"Item Code":"FB040","Item Name":"Shrimp Medium","UOM":"Kg","Origin":"India","Price (KWD)":3.900,"Supplier":"Blue Ocean Exports"},
+        {"Item Code":"FB041","Item Name":"Potatoes","UOM":"Kg","Origin":"Netherlands","Price (KWD)":0.440,"Supplier":"Dutch Agro Supply"},
+        {"Item Code":"FB042","Item Name":"Potatoes","UOM":"Kg","Origin":"India","Price (KWD)":0.290,"Supplier":"Fresh Harvest Traders"},
+        {"Item Code":"FB043","Item Name":"Tomatoes","UOM":"Kg","Origin":"Spain","Price (KWD)":0.730,"Supplier":"Iberia Produce"},
+        {"Item Code":"FB044","Item Name":"Tomatoes","UOM":"Kg","Origin":"Turkey","Price (KWD)":0.560,"Supplier":"Anatolia Foods"},
+        {"Item Code":"FB045","Item Name":"Apples Gala","UOM":"Kg","Origin":"USA","Price (KWD)":1.030,"Supplier":"Orchard Fruits Inc"},
+        {"Item Code":"FB046","Item Name":"Apples Gala","UOM":"Kg","Origin":"New Zealand","Price (KWD)":1.280,"Supplier":"Kiwi Fruit Export"},
+        {"Item Code":"FB047","Item Name":"Coffee Beans Arabica","UOM":"Kg","Origin":"Colombia","Price (KWD)":4.700,"Supplier":"Coffee Traders Intl"},
+        {"Item Code":"FB048","Item Name":"Coffee Beans Arabica Premium","UOM":"Kg","Origin":"Ethiopia","Price (KWD)":6.950,"Supplier":"Ethiopian Coffee Co"},
+        {"Item Code":"FB049","Item Name":"Mineral Water 500ml","UOM":"Bottle","Origin":"France","Price (KWD)":0.260,"Supplier":"Pure Spring Co"},
+        {"Item Code":"FB050","Item Name":"Mineral Water 500ml","UOM":"Bottle","Origin":"Local","Price (KWD)":0.110,"Supplier":"City Beverage Supply"}
     ];
 
     let processedRequestData = [];
@@ -820,12 +824,12 @@
         const totalItems = masterData.length;
         const suppliers = [...new Set(masterData.map(d => d.Supplier))];
         const origins = [...new Set(masterData.map(d => d.Origin))];
-        const avgPrice = masterData.reduce((acc, curr) => acc + (parseFloat(curr['Price (USD)']) || 0), 0) / (totalItems || 1);
+        const avgPrice = masterData.reduce((acc, curr) => acc + getItemPrice(curr), 0) / (totalItems || 1);
 
         document.getElementById('kpiTotalItems').innerText = totalItems;
         document.getElementById('kpiTotalSuppliers').innerText = suppliers.length;
         document.getElementById('kpiTotalOrigins').innerText = origins.length;
-        document.getElementById('kpiAvgPrice').innerText = '$' + avgPrice.toFixed(2);
+        document.getElementById('kpiAvgPrice').innerText = avgPrice.toFixed(3) + ' KWD';
     }
 
     function renderDropdowns() {
@@ -846,7 +850,7 @@
 
         masterData.forEach(item => {
             const supp = item.Supplier;
-            const price = parseFloat(item['Price (USD)']) || 0;
+            const price = getItemPrice(item);
             if (!supplierMap[supp]) {
                 supplierMap[supp] = { count: 0, totalPrice: 0, prices: [], origins: new Set() };
             }
@@ -858,15 +862,15 @@
 
         const supplierNames = Object.keys(supplierMap);
         const itemCounts = supplierNames.map(s => supplierMap[s].count);
-        const avgPrices = supplierNames.map(s => (supplierMap[s].totalPrice / supplierMap[s].count).toFixed(2));
+        const avgPrices = supplierNames.map(s => (supplierMap[s].totalPrice / supplierMap[s].count).toFixed(3));
 
         const tbody = document.getElementById('supplierTableBody');
         tbody.innerHTML = '';
         supplierNames.forEach(s => {
             const stats = supplierMap[s];
-            const avg = (stats.totalPrice / stats.count).toFixed(2);
-            const min = Math.min(...stats.prices).toFixed(2);
-            const max = Math.max(...stats.prices).toFixed(2);
+            const avg = (stats.totalPrice / stats.count).toFixed(3);
+            const min = Math.min(...stats.prices).toFixed(3);
+            const max = Math.max(...stats.prices).toFixed(3);
             const originsStr = Array.from(stats.origins).join(', ');
 
             tbody.innerHTML += `
@@ -877,9 +881,9 @@
                             ${stats.count} item(s) 🔍
                         </span>
                     </td>
-                    <td>$${avg}</td>
-                    <td>$${min}</td>
-                    <td>$${max}</td>
+                    <td>${avg} KWD</td>
+                    <td>${min} KWD</td>
+                    <td>${max} KWD</td>
                     <td><span class="badge badge-green">${originsStr}</span></td>
                 </tr>
             `;
@@ -912,7 +916,7 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Avg Price ($)',
+                    label: 'Avg Price (KWD)',
                     data: prices,
                     borderColor: '#2ecc71',
                     backgroundColor: 'rgba(46, 204, 113, 0.1)',
@@ -934,7 +938,7 @@
                     <td>${item['Item Name'] || ''}</td>
                     <td>${item['UOM'] || ''}</td>
                     <td>${item['Origin'] || ''}</td>
-                    <td><strong>$${parseFloat(item['Price (USD)']).toFixed(2)}</strong></td>
+                    <td><strong>${getItemPrice(item).toFixed(3)} KWD</strong></td>
                     <td>${item['Supplier'] || ''}</td>
                 </tr>
             `;
@@ -1010,10 +1014,10 @@
 
             if (matches.length > 0) {
                 const cheapestMatch = matches.reduce((min, curr) => 
-                    (parseFloat(curr['Price (USD)']) < parseFloat(min['Price (USD)'])) ? curr : min
+                    (getItemPrice(curr) < getItemPrice(min)) ? curr : min
                 , matches[0]);
 
-                const unitPrice = parseFloat(cheapestMatch['Price (USD)']);
+                const unitPrice = getItemPrice(cheapestMatch);
                 const totalPrice = unitPrice * qty;
                 const uom = cheapestMatch['UOM'] || req['UOM'] || 'N/A';
                 const cheapSupplier = cheapestMatch['Supplier'];
@@ -1023,8 +1027,8 @@
                     "Total Request Qty": qty,
                     "UOM": uom,
                     "Cheap Supplier": cheapSupplier,
-                    "Per Cheap Unit Price": unitPrice,
-                    "Total Price": totalPrice,
+                    "Per Cheap Unit Price (KWD)": unitPrice,
+                    "Total Price (KWD)": totalPrice,
                     "Found": true
                 });
 
@@ -1034,8 +1038,8 @@
                         <td>${qty}</td>
                         <td>${uom}</td>
                         <td><span class="badge badge-green">${cheapSupplier}</span></td>
-                        <td>$${unitPrice.toFixed(2)}</td>
-                        <td><strong>$${totalPrice.toFixed(2)}</strong></td>
+                        <td>${unitPrice.toFixed(3)} KWD</td>
+                        <td><strong>${totalPrice.toFixed(3)} KWD</strong></td>
                         <td><span class="badge badge-blue">Matched</span></td>
                     </tr>
                 `;
@@ -1045,8 +1049,8 @@
                     "Total Request Qty": qty,
                     "UOM": req['UOM'] || 'N/A',
                     "Cheap Supplier": "N/A",
-                    "Per Cheap Unit Price": 0,
-                    "Total Price": 0,
+                    "Per Cheap Unit Price (KWD)": 0,
+                    "Total Price (KWD)": 0,
                     "Found": false
                 });
 
@@ -1080,15 +1084,15 @@
             "Total Request Qty": item["Total Request Qty"],
             "UOM": item["UOM"],
             "Cheap Supplier": item["Cheap Supplier"],
-            "Per Cheap Unit Price": item["Per Cheap Unit Price"],
-            "Total Price": item["Total Price"]
+            "Per Cheap Unit Price (KWD)": item["Per Cheap Unit Price (KWD)"],
+            "Total Price (KWD)": item["Total Price (KWD)"]
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(exportRows);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Cheapest Suppliers Quote");
 
-        XLSX.writeFile(workbook, "Cheapest_Supplier_Quote.xlsx");
+        XLSX.writeFile(workbook, "Cheapest_Supplier_Quote_KWD.xlsx");
     }
 </script>
 </body>
