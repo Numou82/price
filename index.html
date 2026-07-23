@@ -48,7 +48,7 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
-            cursor: pointer; /* Indicates header is clickable */
+            cursor: pointer;
             user-select: none;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
@@ -100,6 +100,14 @@
             border-radius: 6px;
             font-weight: 600;
             transition: 0.2s;
+        }
+
+        .btn-green {
+            background-color: var(--success);
+        }
+
+        .btn-green:hover {
+            background-color: #27ae60;
         }
 
         .custom-file-upload:hover {
@@ -182,6 +190,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.03);
             transition: background-color 0.4s ease;
+            align-items: center;
         }
 
         .controls input, .controls select {
@@ -200,6 +209,20 @@
         .controls select {
             flex: 1;
             min-width: 150px;
+        }
+
+        /* Request Box */
+        .request-banner {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         /* Tables */
@@ -243,6 +266,7 @@
 
         .badge-green { background-color: #e8f8f5; color: #117a65; }
         .badge-blue { background-color: #ebf5fb; color: #2980b9; }
+        .badge-red { background-color: #fadbd8; color: #78281f; }
 
         /* Chart Layout */
         .charts-grid {
@@ -289,7 +313,7 @@
             <span class="click-hint">💡 Click header to toggle theme background</span>
         </div>
         <div class="upload-section" onclick="event.stopPropagation();">
-            <label for="excelFile" class="custom-file-upload">📂 Upload New Excel Sheet</label>
+            <label for="excelFile" class="custom-file-upload">📂 Upload New Master Sheet</label>
             <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
         </div>
     </header>
@@ -318,6 +342,7 @@
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('supplier-tab', this)">📊 Supplier Analysis</button>
         <button class="tab-btn" onclick="switchTab('items-tab', this)">📦 Item & Price Comparison</button>
+        <button class="tab-btn" onclick="switchTab('request-tab', this)">🛒 Store Request Analysis</button>
     </div>
 
     <!-- TAB 1: SUPPLIER ANALYSIS -->
@@ -378,6 +403,41 @@
                 </thead>
                 <tbody id="itemsTableBody">
                     <!-- Populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 3: STORE REQUEST & CHEAPEST SUPPLIER FINDER -->
+    <div id="request-tab" class="tab-content">
+        <div class="request-banner">
+            <div>
+                <h3 style="margin:0 0 5px 0; color:var(--primary);">Upload Store Request Sheet</h3>
+                <p style="margin:0; font-size:13px; color:#666;">Upload an Excel file with columns: <strong>Item Name</strong> and <strong>Quantity</strong> (or <strong>Qty</strong>).</p>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <label for="requestFile" class="custom-file-upload">📥 Upload Store Request</label>
+                <input type="file" id="requestFile" accept=".xlsx, .xls, .csv">
+                <button id="exportBtn" class="custom-file-upload btn-green" onclick="exportCheapestQuote()" style="display:none; border:none;">💾 Export Cheapest Supplier Quote</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Requested Item</th>
+                        <th>Quantity</th>
+                        <th>Cheapest Supplier</th>
+                        <th>Unit Price (USD)</th>
+                        <th>Total Cost (USD)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="requestTableBody">
+                    <tr>
+                        <td colspan="6" style="text-align:center; color:#888;">No store request uploaded yet. Upload a sheet above to scan for the cheapest suppliers.</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -509,6 +569,7 @@
         {"Item Code":"FB050","Item Name":"Mineral Water 500ml","UOM":"Bottle","Origin":"Local","Price (USD)":0.35,"Supplier":"City Beverage Supply"}
     ];
 
+    let processedRequestData = [];
     let countChartInstance = null;
     let priceChartInstance = null;
 
@@ -669,7 +730,7 @@
         renderItemsTable(filtered);
     }
 
-    // Handle File Upload
+    // Handle Master File Upload
     document.getElementById('excelFile').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -682,13 +743,111 @@
             const worksheet = workbook.Sheets[sheetName];
             let json = XLSX.utils.sheet_to_json(worksheet);
 
-            // Filter out duplicate header row if present
             json = json.filter(row => row['Item Code'] && row['Item Code'] !== 'Item Code');
-
             initDashboard(json);
         };
         reader.readAsArrayBuffer(file);
     });
+
+    // Handle Store Request File Upload & Cheapest Supplier Scanning
+    document.getElementById('requestFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet);
+
+            processStoreRequest(json);
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    function processStoreRequest(requestData) {
+        processedRequestData = [];
+        const tbody = document.getElementById('requestTableBody');
+        tbody.innerHTML = '';
+
+        requestData.forEach(req => {
+            // Flexible keys for Item Name and Quantity
+            const reqItem = req['Item Name'] || req['Item'] || req['Description'] || '';
+            const qty = parseFloat(req['Quantity'] || req['Qty'] || req['QTY'] || 1);
+
+            if (!reqItem) return;
+
+            // Find all matching suppliers in masterData
+            const matches = masterData.filter(m => 
+                (m['Item Name'] || '').toLowerCase().trim() === reqItem.toLowerCase().trim()
+            );
+
+            if (matches.length > 0) {
+                // Sort by price ascending to find cheapest
+                matches.sort((a, b) => parseFloat(a['Price (USD)']) - parseFloat(b['Price (USD)']));
+                const cheapest = matches[0];
+                const unitPrice = parseFloat(cheapest['Price (USD)']);
+                const totalPrice = unitPrice * qty;
+
+                const rowObj = {
+                    "Item Name": cheapest['Item Name'],
+                    "Quantity": qty,
+                    "Cheapest Supplier": cheapest['Supplier'],
+                    "Unit Price (USD)": unitPrice,
+                    "Total Cost (USD)": totalPrice,
+                    "Status": "Matched"
+                };
+                processedRequestData.push(rowObj);
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${cheapest['Item Name']}</strong></td>
+                        <td>${qty}</td>
+                        <td><span class="badge badge-green">${cheapest['Supplier']}</span></td>
+                        <td>$${unitPrice.toFixed(2)}</td>
+                        <td><strong>$${totalPrice.toFixed(2)}</strong></td>
+                        <td><span class="badge badge-blue">Found (${matches.length} quotes)</span></td>
+                    </tr>
+                `;
+            } else {
+                const rowObj = {
+                    "Item Name": reqItem,
+                    "Quantity": qty,
+                    "Cheapest Supplier": "N/A",
+                    "Unit Price (USD)": 0,
+                    "Total Cost (USD)": 0,
+                    "Status": "Not Found"
+                };
+                processedRequestData.push(rowObj);
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${reqItem}</strong></td>
+                        <td>${qty}</td>
+                        <td><em>Not Found</em></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td><span class="badge badge-red">No Supplier Match</span></td>
+                    </tr>
+                `;
+            }
+        });
+
+        document.getElementById('exportBtn').style.display = 'inline-block';
+    }
+
+    // Export Analysis to Excel
+    function exportCheapestQuote() {
+        if (!processedRequestData.length) return;
+
+        const worksheet = XLSX.utils.json_to_sheet(processedRequestData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Cheapest Suppliers Quote");
+
+        XLSX.writeFile(workbook, "Cheapest_Supplier_Quote.xlsx");
+    }
 
     // Initialize with Master List
     initDashboard(masterData);
