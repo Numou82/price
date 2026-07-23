@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F&B Price Analysis & Supplier Finder</title>
+    <title>Light Fields Foodstuff - Price Analysis & Supplier Finder</title>
     <!-- SheetJS for processing Excel files -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- Chart.js for visualization -->
@@ -29,6 +29,69 @@
             background-color: var(--body-bg);
             color: var(--text-dark);
             transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        /* LOGIN OVERLAY */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(26, 37, 47, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-card {
+            background: #ffffff;
+            padding: 35px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .login-card h2 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 22px;
+        }
+
+        .login-card p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .login-card input, .login-card select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+
+        .login-card button {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .login-card button:hover {
+            background: #2980b9;
         }
 
         .container {
@@ -128,7 +191,13 @@
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             border-left: 5px solid var(--accent);
-            transition: background-color 0.4s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
         }
 
         .kpi-card h3 {
@@ -262,6 +331,17 @@
             border-radius: 12px;
             font-size: 12px;
             font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-interactive {
+            cursor: pointer;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+
+        .badge-interactive:hover {
+            transform: scale(1.05);
+            opacity: 0.85;
         }
 
         .badge-green { background-color: #e8f8f5; color: #117a65; }
@@ -290,7 +370,46 @@
             font-size: 16px;
         }
 
-        /* Dark Theme Adjustments when applicable */
+        /* MODAL POPUP */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: #000;
+        }
+
         body.dark-theme th {
             background-color: #2c3e50;
             color: #ecf0f1;
@@ -301,15 +420,32 @@
         body.dark-theme .kpi-card h3 {
             color: #bdc3c7;
         }
+        body.dark-theme .modal-content {
+            background-color: #0f172a;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
 
+<!-- Login Modal -->
+<div id="loginOverlay" class="login-overlay">
+    <div class="login-card">
+        <h2>Light Fields Foodstuff</h2>
+        <p>Select your user profile to login</p>
+        <select id="userSelect">
+            <option value="Yousef">Yousef</option>
+            <option value="Amir">Amir</option>
+        </select>
+        <button onclick="loginUser()">Login</button>
+    </div>
+</div>
+
 <div class="container">
     <header id="appHeader" title="Click to change background theme">
         <div>
-            <h1>F&B Price & Supplier Analysis</h1>
-            <p>Master Data & Vendor Insights Dashboard</p>
+            <h1>Light Fields Foodstuff</h1>
+            <p>Master Data & Vendor Insights Dashboard | User: <strong id="currentUserDisplay">Guest</strong></p>
             <span class="click-hint">💡 Click header to toggle theme background</span>
         </div>
         <div class="upload-section" onclick="event.stopPropagation();">
@@ -318,22 +454,22 @@
         </div>
     </header>
 
-    <!-- Key Metrics -->
+    <!-- Key Metrics (Interactive Clickable Cards) -->
     <div class="kpi-grid">
-        <div class="kpi-card" style="border-left-color: #3498db;">
+        <div class="kpi-card" style="border-left-color: #3498db;" onclick="switchTab('items-tab', document.querySelectorAll('.tab-btn')[1])">
             <h3>Total Master Items</h3>
             <div class="value" id="kpiTotalItems">0</div>
         </div>
-        <div class="kpi-card" style="border-left-color: #2ecc71;">
-            <h3>Active Suppliers</h3>
+        <div class="kpi-card" style="border-left-color: #2ecc71;" onclick="showActiveSuppliersModal()">
+            <h3>Active Suppliers (Click to View)</h3>
             <div class="value" id="kpiTotalSuppliers">0</div>
         </div>
-        <div class="kpi-card" style="border-left-color: #f39c12;">
+        <div class="kpi-card" style="border-left-color: #f39c12;" onclick="switchTab('items-tab', document.querySelectorAll('.tab-btn')[1])">
             <h3>Average Item Price</h3>
             <div class="value" id="kpiAvgPrice">$0.00</div>
         </div>
-        <div class="kpi-card" style="border-left-color: #9b59b6;">
-            <h3>Total Origins</h3>
+        <div class="kpi-card" style="border-left-color: #9b59b6;" onclick="showOriginsModal()">
+            <h3>Total Origins (Click to View)</h3>
             <div class="value" id="kpiTotalOrigins">0</div>
         </div>
     </div>
@@ -363,7 +499,7 @@
                 <thead>
                     <tr>
                         <th>Supplier Name</th>
-                        <th>Items Supplied</th>
+                        <th>Items Supplied (Click to view)</th>
                         <th>Avg Item Price ($)</th>
                         <th>Min Price ($)</th>
                         <th>Max Price ($)</th>
@@ -445,59 +581,102 @@
     </div>
 </div>
 
+<!-- Modal Dialog -->
+<div id="infoModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <h3 id="modalTitle">Details</h3>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
 <script>
-    // Professional Theme Palette Configurations
-    const themes = [
-        {
-            name: "Default Ice",
-            bodyBg: "#f4f7f6",
-            cardBg: "#ffffff",
-            textDark: "#333333",
-            border: "#e0e0e0",
-            primary: "#2c3e50",
-            isDark: false
-        },
-        {
-            name: "Slate Dark",
-            bodyBg: "#1e293b",
-            cardBg: "#0f172a",
-            textDark: "#f1f5f9",
-            border: "#334155",
-            primary: "#38bdf8",
-            isDark: true
-        },
-        {
-            name: "Executive Navy",
-            bodyBg: "#eef2f6",
-            cardBg: "#ffffff",
-            textDark: "#1e293b",
-            border: "#cbd5e1",
-            primary: "#1e3a8a",
-            isDark: false
-        },
-        {
-            name: "Corporate Charcoal",
-            bodyBg: "#18181b",
-            cardBg: "#27272a",
-            textDark: "#f4f4f5",
-            border: "#3f3f46",
-            primary: "#60a5fa",
-            isDark: true
-        },
-        {
-            name: "Soft Tech",
-            bodyBg: "#f0f4f8",
-            cardBg: "#ffffff",
-            textDark: "#102a43",
-            border: "#bcccdc",
-            primary: "#0b69a3",
-            isDark: false
+    // User Authentication Logic
+    function loginUser() {
+        const user = document.getElementById('userSelect').value;
+        document.getElementById('currentUserDisplay').innerText = user;
+        document.getElementById('loginOverlay').style.display = 'none';
+    }
+
+    // Modal Control Logic
+    function showModal(title, htmlContent) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalBody').innerHTML = htmlContent;
+        document.getElementById('infoModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('infoModal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('infoModal');
+        if (event.target === modal) {
+            closeModal();
         }
+    };
+
+    // Show Active Suppliers Modal
+    function showActiveSuppliersModal() {
+        const suppliers = [...new Set(masterData.map(d => d.Supplier))].sort();
+        let listHtml = '<ol style="padding-left: 20px; line-height: 1.8;">';
+        suppliers.forEach(s => {
+            const count = masterData.filter(m => m.Supplier === s).length;
+            listHtml += `<li><strong>${s}</strong> - (${count} item(s))</li>`;
+        });
+        listHtml += '</ol>';
+        showModal(`Active Suppliers List (${suppliers.length})`, listHtml);
+    }
+
+    // Show Origins Modal
+    function showOriginsModal() {
+        const origins = [...new Set(masterData.map(d => d.Origin))].sort();
+        let listHtml = '<ul style="padding-left: 20px; line-height: 1.8;">';
+        origins.forEach(o => {
+            listHtml += `<li><strong>${o}</strong></li>`;
+        });
+        listHtml += '</ul>';
+        showModal(`Total Origins (${origins.length})`, listHtml);
+    }
+
+    // Show Items supplied by specific vendor
+    function showSupplierItemsModal(supplierName) {
+        const items = masterData.filter(m => m.Supplier === supplierName);
+        let tableHtml = `
+            <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr style="text-align:left; border-bottom:2px solid #ccc;">
+                        <th style="padding:8px;">Code</th>
+                        <th style="padding:8px;">Item Name</th>
+                        <th style="padding:8px;">UOM</th>
+                        <th style="padding:8px;">Price</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+        items.forEach(i => {
+            tableHtml += `
+                <tr style="border-bottom:1px solid #eee;">
+                    <td style="padding:8px;">${i['Item Code']}</td>
+                    <td style="padding:8px;"><strong>${i['Item Name']}</strong></td>
+                    <td style="padding:8px;">${i['UOM']}</td>
+                    <td style="padding:8px;">$${parseFloat(i['Price (USD)']).toFixed(2)}</td>
+                </tr>`;
+        });
+        tableHtml += 'tbody></table>';
+        showModal(`Items Supplied by ${supplierName}`, tableHtml);
+    }
+
+    // Themes Setup
+    const themes = [
+        { name: "Default Ice", bodyBg: "#f4f7f6", cardBg: "#ffffff", textDark: "#333333", border: "#e0e0e0", primary: "#2c3e50", isDark: false },
+        { name: "Slate Dark", bodyBg: "#1e293b", cardBg: "#0f172a", textDark: "#f1f5f9", border: "#334155", primary: "#38bdf8", isDark: true },
+        { name: "Executive Navy", bodyBg: "#eef2f6", cardBg: "#ffffff", textDark: "#1e293b", border: "#cbd5e1", primary: "#1e3a8a", isDark: false },
+        { name: "Corporate Charcoal", bodyBg: "#18181b", cardBg: "#27272a", textDark: "#f4f4f5", border: "#3f3f46", primary: "#60a5fa", isDark: true },
+        { name: "Soft Tech", bodyBg: "#f0f4f8", cardBg: "#ffffff", textDark: "#102a43", border: "#bcccdc", primary: "#0b69a3", isDark: false }
     ];
 
     let currentThemeIndex = 0;
 
-    // Header Click Event Listener to Cycle Background Themes
     document.getElementById('appHeader').addEventListener('click', function() {
         currentThemeIndex = (currentThemeIndex + 1) % themes.length;
         const theme = themes[currentThemeIndex];
@@ -516,7 +695,6 @@
         }
     });
 
-    // Embedded initial dataset from Master list.xlsx
     let masterData = [
         {"Item Code":"FB001","Item Name":"Basmati Rice 5kg","UOM":"Bag","Origin":"India","Price (USD)":17.8,"Supplier":"Global Foods Ltd"},
         {"Item Code":"FB002","Item Name":"Basmati Rice 5kg","UOM":"Bag","Origin":"Pakistan","Price (USD)":15.9,"Supplier":"Asia Grain Supply"},
@@ -574,20 +752,17 @@
     let countChartInstance = null;
     let priceChartInstance = null;
 
-    // Load initial dashboard components
     document.addEventListener("DOMContentLoaded", () => {
         initDashboard(masterData);
     });
 
-    // Tab Switcher
     function switchTab(tabId, btn) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
-        btn.classList.add('active');
+        if (btn) btn.classList.add('active');
     }
 
-    // Process & Render Dashboard
     function initDashboard(data) {
         masterData = data;
         renderKPIs();
@@ -640,7 +815,6 @@
         const itemCounts = supplierNames.map(s => supplierMap[s].count);
         const avgPrices = supplierNames.map(s => (supplierMap[s].totalPrice / supplierMap[s].count).toFixed(2));
 
-        // Populate Supplier Table
         const tbody = document.getElementById('supplierTableBody');
         tbody.innerHTML = '';
         supplierNames.forEach(s => {
@@ -653,7 +827,11 @@
             tbody.innerHTML += `
                 <tr>
                     <td><strong>${s}</strong></td>
-                    <td><span class="badge badge-blue">${stats.count} item(s)</span></td>
+                    <td>
+                        <span class="badge badge-blue badge-interactive" onclick="showSupplierItemsModal('${s.replace(/'/g, "\\'")}')">
+                            ${stats.count} item(s) 🔍
+                        </span>
+                    </td>
                     <td>$${avg}</td>
                     <td>$${min}</td>
                     <td>$${max}</td>
@@ -662,7 +840,6 @@
             `;
         });
 
-        // Charts
         renderCharts(supplierNames, itemCounts, avgPrices);
     }
 
@@ -736,7 +913,6 @@
         renderItemsTable(filtered);
     }
 
-    // Handle Master File Upload
     document.getElementById('excelFile').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -755,7 +931,6 @@
         reader.readAsArrayBuffer(file);
     });
 
-    // Handle Store Request File Upload & Cheapest Supplier Scanning
     document.getElementById('requestFile').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -784,13 +959,11 @@
 
             if (!reqItem) return;
 
-            // Find matching items in masterData
             const matches = masterData.filter(m => 
                 (m['Item Name'] || '').toLowerCase().trim() === reqItem.toLowerCase().trim()
             );
 
             if (matches.length > 0) {
-                // Find lowest unit price
                 const cheapestMatch = matches.reduce((min, curr) => 
                     (parseFloat(curr['Price (USD)']) < parseFloat(min['Price (USD)'])) ? curr : min
                 , matches[0]);
@@ -851,7 +1024,6 @@
         }
     }
 
-    // Export function formatted per requested column structure
     function exportCheapestQuote() {
         if (!processedRequestData || processedRequestData.length === 0) {
             alert('No processed request data available for export.');
