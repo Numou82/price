@@ -4,240 +4,587 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>F&B Price Analysis & Supplier Finder</title>
-    <!-- Include SheetJS library for processing Excel files directly in browser -->
+    <!-- SheetJS for processing Excel files -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Chart.js for visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --bg-light: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-dark: #333333;
+            --border-color: #e0e0e0;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 30px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
             background-color: #f4f7f6;
-            color: #333;
+            color: var(--text-dark);
         }
+
         .container {
-            max-width: 900px;
-            margin: auto;
-            background: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        h2 {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-        }
-        .section {
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            background: #fafafa;
-        }
-        label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 8px;
-        }
-        input[type="file"] {
-            margin-bottom: 10px;
-        }
-        button {
-            background-color: #27ae60;
+
+        header {
+            background: linear-gradient(135deg, var(--primary), #1a252f);
             color: white;
-            padding: 10px 18px;
-            border: none;
-            border-radius: 4px;
+            padding: 25px 30px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 26px;
+        }
+
+        header p {
+            margin: 5px 0 0 0;
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .upload-section {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 2px dashed var(--accent);
+            text-align: center;
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .custom-file-upload {
+            display: inline-block;
+            padding: 8px 16px;
             cursor: pointer;
-            font-size: 15px;
+            background-color: var(--accent);
+            color: white;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: 0.2s;
         }
-        button:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
+
+        .custom-file-upload:hover {
+            background-color: #2980b9;
         }
-        button:hover:not(:disabled) {
-            background-color: #219150;
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
         }
+
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--accent);
+        }
+
+        .kpi-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: #7f8c8d;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-card .value {
+            font-size: 26px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #7f8c8d;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Controls / Search */
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+
+        .controls input, .controls select {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .controls input[type="text"] {
+            flex: 2;
+            min-width: 200px;
+        }
+
+        .controls select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        /* Tables */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            overflow-x: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px 12px;
             text-align: left;
+            font-size: 14px;
         }
+
+        th, td {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
         th {
-            background-color: #3498db;
-            color: white;
+            background-color: #f8f9fa;
+            color: var(--primary);
+            font-weight: 700;
         }
-        .status {
-            font-weight: bold;
-            color: #e67e22;
+
+        tr:hover {
+            background-color: #f1f4f6;
         }
-        .success {
-            color: #27ae60;
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-green { background-color: #e8f8f5; color: #117a65; }
+        .badge-blue { background-color: #ebf5fb; color: #2980b9; }
+
+        /* Chart Layout */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .chart-card h3 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🍽️ F&B Price Analysis & Supplier Selector</h2>
+    <header>
+        <div>
+            <h1>F&B Price & Supplier Analysis</h1>
+            <p>Master Data & Vendor Insights Dashboard</p>
+        </div>
+        <div class="upload-section">
+            <label for="excelFile" class="custom-file-upload">📂 Upload New Excel Sheet</label>
+            <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
+        </div>
+    </header>
 
-    <div class="section">
-        <label for="masterFile">1. Upload Master List Excel (`Master list.xlsx`):</label>
-        <input type="file" id="masterFile" accept=".xlsx, .xls">
-        <div id="masterStatus" class="status">Waiting for Master List...</div>
+    <!-- Key Metrics -->
+    <div class="kpi-grid">
+        <div class="kpi-card" style="border-left-color: #3498db;">
+            <h3>Total Master Items</h3>
+            <div class="value" id="kpiTotalItems">0</div>
+        </div>
+        <div class="kpi-card" style="border-left-color: #2ecc71;">
+            <h3>Active Suppliers</h3>
+            <div class="value" id="kpiTotalSuppliers">0</div>
+        </div>
+        <div class="kpi-card" style="border-left-color: #f39c12;">
+            <h3>Average Item Price</h3>
+            <div class="value" id="kpiAvgPrice">$0.00</div>
+        </div>
+        <div class="kpi-card" style="border-left-color: #9b59b6;">
+            <h3>Total Origins</h3>
+            <div class="value" id="kpiTotalOrigins">0</div>
+        </div>
     </div>
 
-    <div class="section">
-        <label for="requestFile">2. Upload Storekeeper Request Excel File:</label>
-        <input type="file" id="requestFile" accept=".xlsx, .xls" disabled>
-        <div id="requestStatus" class="status"></div>
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('supplier-tab', this)">📊 Supplier Analysis</button>
+        <button class="tab-btn" onclick="switchTab('items-tab', this)">📦 Item & Price Comparison</button>
     </div>
 
-    <div class="section">
-        <button id="processBtn" disabled onclick="processFiles()">🔍 Analyze & Select Cheapest Suppliers</button>
-        <button id="downloadBtn" style="display:none;" onclick="downloadExcel()">📥 Download Analyzed Excel Order</button>
+    <!-- TAB 1: SUPPLIER ANALYSIS -->
+    <div id="supplier-tab" class="tab-content active">
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Items Offered per Supplier</h3>
+                <canvas id="supplierCountChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Average Price ($) by Supplier</h3>
+                <canvas id="supplierPriceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Supplier Name</th>
+                        <th>Items Supplied</th>
+                        <th>Avg Item Price ($)</th>
+                        <th>Min Price ($)</th>
+                        <th>Max Price ($)</th>
+                        <th>Primary Origins</th>
+                    </tr>
+                </thead>
+                <tbody id="supplierTableBody">
+                    <!-- Populated dynamically -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div id="results"></div>
+    <!-- TAB 2: ITEM & PRICE COMPARISON -->
+    <div id="items-tab" class="tab-content">
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="Search item, code, or supplier..." oninput="filterItems()">
+            <select id="supplierFilter" onchange="filterItems()">
+                <option value="">All Suppliers</option>
+            </select>
+            <select id="originFilter" onchange="filterItems()">
+                <option value="">All Origins</option>
+            </select>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item Code</th>
+                        <th>Item Name</th>
+                        <th>UOM</th>
+                        <th>Origin</th>
+                        <th>Price (USD)</th>
+                        <th>Supplier</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                    <!-- Populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script>
-    let masterData = [];
-    let requestData = [];
-    let analyzedResults = [];
+    // Embedded initial dataset from Master list.xlsx
+    let masterData = [
+        {"Item Code":"FB001","Item Name":"Basmati Rice 5kg","UOM":"Bag","Origin":"India","Price (USD)":17.8,"Supplier":"Global Foods Ltd"},
+        {"Item Code":"FB002","Item Name":"Basmati Rice 5kg","UOM":"Bag","Origin":"Pakistan","Price (USD)":15.9,"Supplier":"Asia Grain Supply"},
+        {"Item Code":"FB003","Item Name":"Basmati Rice 5kg Premium","UOM":"Bag","Origin":"India","Price (USD)":22.5,"Supplier":"Premium Harvest"},
+        {"Item Code":"FB004","Item Name":"Jasmine Rice 5kg","UOM":"Bag","Origin":"Thailand","Price (USD)":19.2,"Supplier":"Thai Food Supply"},
+        {"Item Code":"FB005","Item Name":"Jasmine Rice 5kg","UOM":"Bag","Origin":"Vietnam","Price (USD)":17.6,"Supplier":"Mekong Foods"},
+        {"Item Code":"FB006","Item Name":"Wheat Flour","UOM":"Kg","Origin":"Australia","Price (USD)":1.75,"Supplier":"Grain World"},
+        {"Item Code":"FB007","Item Name":"Wheat Flour","UOM":"Kg","Origin":"India","Price (USD)":1.35,"Supplier":"Sunrise Trading"},
+        {"Item Code":"FB008","Item Name":"White Sugar","UOM":"Kg","Origin":"Brazil","Price (USD)":1.2,"Supplier":"Sweet Harvest Co"},
+        {"Item Code":"FB009","Item Name":"White Sugar","UOM":"Kg","Origin":"Thailand","Price (USD)":1.05,"Supplier":"Golden Sweet Ltd"},
+        {"Item Code":"FB010","Item Name":"Sea Salt","UOM":"Kg","Origin":"Australia","Price (USD)":0.85,"Supplier":"Ocean Foods"},
+        {"Item Code":"FB011","Item Name":"Black Pepper Whole","UOM":"Kg","Origin":"Vietnam","Price (USD)":11.8,"Supplier":"Spice Masters"},
+        {"Item Code":"FB012","Item Name":"Black Pepper Whole","UOM":"Kg","Origin":"India","Price (USD)":13.5,"Supplier":"Royal Spices"},
+        {"Item Code":"FB013","Item Name":"Olive Oil Extra Virgin","UOM":"Litre","Origin":"Spain","Price (USD)":9.9,"Supplier":"Mediterranean Imports"},
+        {"Item Code":"FB014","Item Name":"Olive Oil Extra Virgin","UOM":"Litre","Origin":"Italy","Price (USD)":12.8,"Supplier":"Italian Pantry"},
+        {"Item Code":"FB015","Item Name":"Sunflower Oil","UOM":"Litre","Origin":"Ukraine","Price (USD)":3.2,"Supplier":"Golden Oil Trading"},
+        {"Item Code":"FB016","Item Name":"Sunflower Oil","UOM":"Litre","Origin":"Turkey","Price (USD)":3.8,"Supplier":"Anatolia Foods"},
+        {"Item Code":"FB017","Item Name":"Soy Sauce","UOM":"Bottle","Origin":"Japan","Price (USD)":4.1,"Supplier":"Sakura Foods"},
+        {"Item Code":"FB018","Item Name":"Soy Sauce","UOM":"Bottle","Origin":"China","Price (USD)":2.9,"Supplier":"East Asia Foods"},
+        {"Item Code":"FB019","Item Name":"Tomato Ketchup","UOM":"Bottle","Origin":"USA","Price (USD)":3.1,"Supplier":"Fresh Choice Supply"},
+        {"Item Code":"FB020","Item Name":"Tomato Ketchup","UOM":"Bottle","Origin":"Malaysia","Price (USD)":2.5,"Supplier":"Kitchen Essentials"},
+        {"Item Code":"FB021","Item Name":"Mayonnaise","UOM":"Jar","Origin":"Netherlands","Price (USD)":5.1,"Supplier":"Dutch Foods BV"},
+        {"Item Code":"FB022","Item Name":"Mayonnaise","UOM":"Jar","Origin":"USA","Price (USD)":4.4,"Supplier":"Fresh Choice Supply"},
+        {"Item Code":"FB023","Item Name":"Canned Tuna","UOM":"Can","Origin":"Philippines","Price (USD)":2.3,"Supplier":"Ocean Catch Ltd"},
+        {"Item Code":"FB024","Item Name":"Canned Tuna","UOM":"Can","Origin":"Thailand","Price (USD)":1.95,"Supplier":"Thai Food Supply"},
+        {"Item Code":"FB025","Item Name":"Coconut Milk","UOM":"Can","Origin":"Thailand","Price (USD)":2.6,"Supplier":"Tropical Harvest"},
+        {"Item Code":"FB026","Item Name":"Coconut Milk","UOM":"Can","Origin":"Indonesia","Price (USD)":2.2,"Supplier":"Island Foods"},
+        {"Item Code":"FB027","Item Name":"Fresh Milk","UOM":"Litre","Origin":"New Zealand","Price (USD)":2.4,"Supplier":"Dairy Fresh Ltd"},
+        {"Item Code":"FB028","Item Name":"Fresh Milk","UOM":"Litre","Origin":"Australia","Price (USD)":2.1,"Supplier":"Southern Dairy"},
+        {"Item Code":"FB029","Item Name":"Cheddar Cheese","UOM":"Kg","Origin":"New Zealand","Price (USD)":11.0,"Supplier":"Dairy Fresh Ltd"},
+        {"Item Code":"FB030","Item Name":"Cheddar Cheese Premium","UOM":"Kg","Origin":"England","Price (USD)":15.8,"Supplier":"English Dairy Co"},
+        {"Item Code":"FB031","Item Name":"Butter Unsalted","UOM":"Kg","Origin":"Denmark","Price (USD)":8.7,"Supplier":"Nordic Dairy"},
+        {"Item Code":"FB032","Item Name":"Eggs Grade A","UOM":"Dozen","Origin":"Malaysia","Price (USD)":3.7,"Supplier":"Farm Fresh Produce"},
+        {"Item Code":"FB033","Item Name":"Chicken Breast","UOM":"Kg","Origin":"Brazil","Price (USD)":6.8,"Supplier":"Prime Poultry"},
+        {"Item Code":"FB034","Item Name":"Chicken Breast","UOM":"Kg","Origin":"USA","Price (USD)":8.9,"Supplier":"American Meats"},
+        {"Item Code":"FB035","Item Name":"Beef Striploin","UOM":"Kg","Origin":"Australia","Price (USD)":24.8,"Supplier":"Aussie Meat Export"},
+        {"Item Code":"FB036","Item Name":"Beef Striploin Wagyu","UOM":"Kg","Origin":"Japan","Price (USD)":78.5,"Supplier":"Kobe Premium Foods"},
+        {"Item Code":"FB037","Item Name":"Salmon Fillet","UOM":"Kg","Origin":"Norway","Price (USD)":21.8,"Supplier":"Nordic Seafood"},
+        {"Item Code":"FB038","Item Name":"Salmon Fillet","UOM":"Kg","Origin":"Chile","Price (USD)":17.9,"Supplier":"Pacific Seafood"},
+        {"Item Code":"FB039","Item Name":"Shrimp Medium","UOM":"Kg","Origin":"Vietnam","Price (USD)":14.2,"Supplier":"Ocean Catch Ltd"},
+        {"Item Code":"FB040","Item Name":"Shrimp Medium","UOM":"Kg","Origin":"India","Price (USD)":12.9,"Supplier":"Blue Ocean Exports"},
+        {"Item Code":"FB041","Item Name":"Potatoes","UOM":"Kg","Origin":"Netherlands","Price (USD)":1.45,"Supplier":"Dutch Agro Supply"},
+        {"Item Code":"FB042","Item Name":"Potatoes","UOM":"Kg","Origin":"India","Price (USD)":0.95,"Supplier":"Fresh Harvest Traders"},
+        {"Item Code":"FB043","Item Name":"Tomatoes","UOM":"Kg","Origin":"Spain","Price (USD)":2.4,"Supplier":"Iberia Produce"},
+        {"Item Code":"FB044","Item Name":"Tomatoes","UOM":"Kg","Origin":"Turkey","Price (USD)":1.85,"Supplier":"Anatolia Foods"},
+        {"Item Code":"FB045","Item Name":"Apples Gala","UOM":"Kg","Origin":"USA","Price (USD)":3.4,"Supplier":"Orchard Fruits Inc"},
+        {"Item Code":"FB046","Item Name":"Apples Gala","UOM":"Kg","Origin":"New Zealand","Price (USD)":4.2,"Supplier":"Kiwi Fruit Export"},
+        {"Item Code":"FB047","Item Name":"Coffee Beans Arabica","UOM":"Kg","Origin":"Colombia","Price (USD)":15.5,"Supplier":"Coffee Traders Intl"},
+        {"Item Code":"FB048","Item Name":"Coffee Beans Arabica Premium","UOM":"Kg","Origin":"Ethiopia","Price (USD)":22.8,"Supplier":"Ethiopian Coffee Co"},
+        {"Item Code":"FB049","Item Name":"Mineral Water 500ml","UOM":"Bottle","Origin":"France","Price (USD)":0.85,"Supplier":"Pure Spring Co"},
+        {"Item Code":"FB050","Item Name":"Mineral Water 500ml","UOM":"Bottle","Origin":"Local","Price (USD)":0.35,"Supplier":"City Beverage Supply"}
+    ];
 
-    // 1. Handle Master List Upload
-    document.getElementById('masterFile').addEventListener('change', function(e) {
-        let file = e.target.files[0];
-        if (!file) return;
+    let countChartInstance = null;
+    let priceChartInstance = null;
 
-        let reader = new FileReader();
-        reader.onload = function(e) {
-            let data = new Uint8Array(e.target.result);
-            let workbook = XLSX.read(data, {type: 'array'});
-            let sheetName = workbook.SheetNames[0];
-            masterData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-            
-            document.getElementById('masterStatus').className = "status success";
-            document.getElementById('masterStatus').innerText = `✅ Master List Loaded (${masterData.length} records found).`;
-            document.getElementById('requestFile').disabled = false;
-        };
-        reader.readAsArrayBuffer(file);
-    });
+    // Tab Switcher
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
 
-    // 2. Handle Request File Upload
-    document.getElementById('requestFile').addEventListener('change', function(e) {
-        let file = e.target.files[0];
-        if (!file) return;
+    // Process & Render Dashboard
+    function initDashboard(data) {
+        masterData = data;
+        renderKPIs();
+        renderDropdowns();
+        renderSupplierAnalysis();
+        renderItemsTable(masterData);
+    }
 
-        let reader = new FileReader();
-        reader.onload = function(e) {
-            let data = new Uint8Array(e.target.result);
-            let workbook = XLSX.read(data, {type: 'array'});
-            let sheetName = workbook.SheetNames[0];
-            requestData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    function renderKPIs() {
+        const totalItems = masterData.length;
+        const suppliers = [...new Set(masterData.map(d => d.Supplier))];
+        const origins = [...new Set(masterData.map(d => d.Origin))];
+        const avgPrice = masterData.reduce((acc, curr) => acc + (parseFloat(curr['Price (USD)']) || 0), 0) / (totalItems || 1);
 
-            document.getElementById('requestStatus').className = "status success";
-            document.getElementById('requestStatus').innerText = `✅ Request File Loaded (${requestData.length} items requested).`;
-            document.getElementById('processBtn').disabled = false;
-        };
-        reader.readAsArrayBuffer(file);
-    });
+        document.getElementById('kpiTotalItems').innerText = totalItems;
+        document.getElementById('kpiTotalSuppliers').innerText = suppliers.length;
+        document.getElementById('kpiTotalOrigins').innerText = origins.length;
+        document.getElementById('kpiAvgPrice').innerText = '$' + avgPrice.toFixed(2);
+    }
 
-    // 3. Process Price Analysis & Select Cheap Supplier
-    function processFiles() {
-        analyzedResults = [];
+    function renderDropdowns() {
+        const suppliers = [...new Set(masterData.map(d => d.Supplier))].sort();
+        const origins = [...new Set(masterData.map(d => d.Origin))].sort();
 
-        requestData.forEach(req => {
-            let itemCode = req['Item Code'];
-            let reqQty = parseFloat(req['Requested Qty'] || req['Qty'] || 0);
+        const suppSelect = document.getElementById('supplierFilter');
+        suppSelect.innerHTML = '<option value="">All Suppliers</option>';
+        suppliers.forEach(s => suppSelect.innerHTML += `<option value="${s}">${s}</option>`);
 
-            // Filter master list for matching Item Code
-            let matches = masterData.filter(m => m['Item Code'] === itemCode);
+        const origSelect = document.getElementById('originFilter');
+        origSelect.innerHTML = '<option value="">All Origins</option>';
+        origins.forEach(o => origSelect.innerHTML += `<option value="${o}">${o}</option>`);
+    }
 
-            if (matches.length > 0) {
-                // Find lowest price
-                matches.sort((a, b) => parseFloat(a['Price (USD)']) - parseFloat(b['Price (USD)']));
-                let cheapest = matches[0];
+    function renderSupplierAnalysis() {
+        const supplierMap = {};
 
-                let unitPrice = parseFloat(cheapest['Price (USD)']);
-                let totalCost = reqQty * unitPrice;
-
-                analyzedResults.push({
-                    'Item Code': itemCode,
-                    'Item Name': cheapest['Item Name'],
-                    'UOM': cheapest['UOM'],
-                    'Requested Qty': reqQty,
-                    'Cheapest Supplier': cheapest['Supplier'],
-                    'Unit Price (USD)': unitPrice,
-                    'Total Cost (USD)': parseFloat(totalCost.toFixed(2)),
-                    'Origin': cheapest['Origin']
-                });
-            } else {
-                // Item code not found in master list
-                analyzedResults.push({
-                    'Item Code': itemCode,
-                    'Item Name': req['Item Name'] || 'Not Found',
-                    'UOM': req['UOM'] || 'N/A',
-                    'Requested Qty': reqQty,
-                    'Cheapest Supplier': 'NOT FOUND IN MASTER LIST',
-                    'Unit Price (USD)': 0,
-                    'Total Cost (USD)': 0,
-                    'Origin': 'N/A'
-                });
+        masterData.forEach(item => {
+            const supp = item.Supplier;
+            const price = parseFloat(item['Price (USD)']) || 0;
+            if (!supplierMap[supp]) {
+                supplierMap[supp] = { count: 0, totalPrice: 0, prices: [], origins: new Set() };
             }
+            supplierMap[supp].count++;
+            supplierMap[supp].totalPrice += price;
+            supplierMap[supp].prices.push(price);
+            supplierMap[supp].origins.add(item.Origin);
         });
 
-        displayResultsTable(analyzedResults);
-        document.getElementById('downloadBtn').style.display = 'inline-block';
-    }
+        const supplierNames = Object.keys(supplierMap);
+        const itemCounts = supplierNames.map(s => supplierMap[s].count);
+        const avgPrices = supplierNames.map(s => (supplierMap[s].totalPrice / supplierMap[s].count).toFixed(2));
 
-    // 4. Render Table in Browser
-    function displayResultsTable(data) {
-        let resultsDiv = document.getElementById('results');
-        let html = `<h3>Optimized Purchase Order Preview</h3>`;
-        html += `<table><tr>
-                    <th>Item Code</th>
-                    <th>Item Name</th>
-                    <th>UOM</th>
-                    <th>Qty</th>
-                    <th>Cheapest Supplier</th>
-                    <th>Price (USD)</th>
-                    <th>Total (USD)</th>
-                 </tr>`;
+        // Populate Supplier Table
+        const tbody = document.getElementById('supplierTableBody');
+        tbody.innerHTML = '';
+        supplierNames.forEach(s => {
+            const stats = supplierMap[s];
+            const avg = (stats.totalPrice / stats.count).toFixed(2);
+            const min = Math.min(...stats.prices).toFixed(2);
+            const max = Math.max(...stats.prices).toFixed(2);
+            const originsStr = Array.from(stats.origins).join(', ');
 
-        let totalOrderValue = 0;
-
-        data.forEach(row => {
-            totalOrderValue += row['Total Cost (USD)'];
-            html += `<tr>
-                        <td>${row['Item Code']}</td>
-                        <td>${row['Item Name']}</td>
-                        <td>${row['UOM']}</td>
-                        <td>${row['Requested Qty']}</td>
-                        <td><strong>${row['Cheapest Supplier']}</strong></td>
-                        <td>$${row['Unit Price (USD)'].toFixed(2)}</td>
-                        <td>$${row['Total Cost (USD)'].toFixed(2)}</td>
-                     </tr>`;
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${s}</strong></td>
+                    <td><span class="badge badge-blue">${stats.count} item(s)</span></td>
+                    <td>$${avg}</td>
+                    <td>$${min}</td>
+                    <td>$${max}</td>
+                    <td><span class="badge badge-green">${originsStr}</span></td>
+                </tr>
+            `;
         });
 
-        html += `</table>`;
-        html += `<h3 style="text-align:right; color:#27ae60;">Total Order Value: $${totalOrderValue.toFixed(2)}</h3>`;
-        resultsDiv.innerHTML = html;
+        // Charts
+        renderCharts(supplierNames, itemCounts, avgPrices);
     }
 
-    // 5. Download Analyzed Result as Excel
-    function downloadExcel() {
-        let worksheet = XLSX.utils.json_to_sheet(analyzedResults);
-        let workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Optimized_PO");
+    function renderCharts(labels, counts, prices) {
+        if (countChartInstance) countChartInstance.destroy();
+        if (priceChartInstance) priceChartInstance.destroy();
 
-        XLSX.writeFile(workbook, "Optimized_Purchase_Order.xlsx");
+        const ctx1 = document.getElementById('supplierCountChart').getContext('2d');
+        countChartInstance = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Items Supplied',
+                    data: counts,
+                    backgroundColor: '#3498db'
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+
+        const ctx2 = document.getElementById('supplierPriceChart').getContext('2d');
+        priceChartInstance = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Avg Price ($)',
+                    data: prices,
+                    borderColor: '#2ecc71',
+                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                    fill: true,
+                    tension: 0.2
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
     }
+
+    function renderItemsTable(data) {
+        const tbody = document.getElementById('itemsTableBody');
+        tbody.innerHTML = '';
+        data.forEach(item => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${item['Item Code'] || ''}</strong></td>
+                    <td>${item['Item Name'] || ''}</td>
+                    <td>${item['UOM'] || ''}</td>
+                    <td>${item['Origin'] || ''}</td>
+                    <td><strong>$${parseFloat(item['Price (USD)']).toFixed(2)}</strong></td>
+                    <td>${item['Supplier'] || ''}</td>
+                </tr>
+            `;
+        });
+    }
+
+    function filterItems() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const supplier = document.getElementById('supplierFilter').value;
+        const origin = document.getElementById('originFilter').value;
+
+        const filtered = masterData.filter(item => {
+            const matchesSearch = (item['Item Name'] || '').toLowerCase().includes(search) ||
+                                  (item['Item Code'] || '').toLowerCase().includes(search) ||
+                                  (item['Supplier'] || '').toLowerCase().includes(search);
+            const matchesSupplier = !supplier || item.Supplier === supplier;
+            const matchesOrigin = !origin || item.Origin === origin;
+            return matchesSearch && matchesSupplier && matchesOrigin;
+        });
+
+        renderItemsTable(filtered);
+    }
+
+    // Handle File Upload
+    document.getElementById('excelFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            let json = XLSX.utils.sheet_to_json(worksheet);
+
+            // Filter out duplicate header row if present
+            json = json.filter(row => row['Item Code'] && row['Item Code'] !== 'Item Code');
+
+            initDashboard(json);
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    // Initialize with Master List
+    initDashboard(masterData);
 </script>
 
 </body>
