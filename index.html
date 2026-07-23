@@ -94,6 +94,13 @@
             background: #2980b9;
         }
 
+        .error-msg {
+            color: var(--danger);
+            font-size: 13px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -132,6 +139,16 @@
             font-size: 14px;
         }
 
+        .user-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+
         .click-hint {
             font-size: 11px;
             background: rgba(255,255,255,0.15);
@@ -139,6 +156,12 @@
             border-radius: 4px;
             margin-top: 6px;
             display: inline-block;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .upload-section {
@@ -389,7 +412,7 @@
             padding: 25px;
             border-radius: 10px;
             width: 90%;
-            max-width: 600px;
+            max-width: 650px;
             max-height: 80vh;
             overflow-y: auto;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
@@ -432,11 +455,13 @@
 <div id="loginOverlay" class="login-overlay">
     <div class="login-card">
         <h2>Light Fields Foodstuff</h2>
-        <p>Select your user profile to login</p>
+        <p>Login to Access Dashboard</p>
         <select id="userSelect">
             <option value="Yousef">Yousef</option>
             <option value="Amir">Amir</option>
         </select>
+        <input type="password" id="userPassword" placeholder="Enter Password" onkeyup="if(event.key==='Enter') loginUser()">
+        <div id="loginError" class="error-msg">Incorrect password!</div>
         <button onclick="loginUser()">Login</button>
     </div>
 </div>
@@ -445,12 +470,17 @@
     <header id="appHeader" title="Click to change background theme">
         <div>
             <h1>Light Fields Foodstuff</h1>
-            <p>Master Data & Vendor Insights Dashboard | User: <strong id="currentUserDisplay">Guest</strong></p>
+            <p>Master Data & Vendor Insights Dashboard</p>
             <span class="click-hint">💡 Click header to toggle theme background</span>
         </div>
-        <div class="upload-section" onclick="event.stopPropagation();">
-            <label for="excelFile" class="custom-file-upload">📂 Upload New Master Sheet</label>
-            <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
+        <div class="header-actions">
+            <div>
+                <div class="user-badge">👤 User: <span id="currentUserDisplay">Guest</span></div>
+            </div>
+            <div class="upload-section" onclick="event.stopPropagation();">
+                <label for="excelFile" class="custom-file-upload">📂 Upload New Master Sheet</label>
+                <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
+            </div>
         </div>
     </header>
 
@@ -591,11 +621,24 @@
 </div>
 
 <script>
-    // User Authentication Logic
+    // User Authentication Credentials
+    const userPasswords = {
+        'Yousef': 'yousef123',
+        'Amir': 'amir123'
+    };
+
     function loginUser() {
         const user = document.getElementById('userSelect').value;
-        document.getElementById('currentUserDisplay').innerText = user;
-        document.getElementById('loginOverlay').style.display = 'none';
+        const pass = document.getElementById('userPassword').value;
+        const errorDiv = document.getElementById('loginError');
+
+        if (userPasswords[user] && pass === userPasswords[user]) {
+            document.getElementById('currentUserDisplay').innerText = user;
+            document.getElementById('loginOverlay').style.display = 'none';
+            errorDiv.style.display = 'none';
+        } else {
+            errorDiv.style.display = 'block';
+        }
     }
 
     // Modal Control Logic
@@ -639,30 +682,32 @@
         showModal(`Total Origins (${origins.length})`, listHtml);
     }
 
-    // Show Items supplied by specific vendor
+    // Show Items supplied by specific vendor (Fixed: Includes Item Origin & Clean Table HTML)
     function showSupplierItemsModal(supplierName) {
         const items = masterData.filter(m => m.Supplier === supplierName);
         let tableHtml = `
-            <table style="width:100%; border-collapse:collapse;">
+            <table style="width:100%; border-collapse:collapse; margin-top:10px;">
                 <thead>
-                    <tr style="text-align:left; border-bottom:2px solid #ccc;">
-                        <th style="padding:8px;">Code</th>
-                        <th style="padding:8px;">Item Name</th>
-                        <th style="padding:8px;">UOM</th>
-                        <th style="padding:8px;">Price</th>
+                    <tr style="text-align:left; border-bottom:2px solid #ccc; background-color: var(--bg-light);">
+                        <th style="padding:10px;">Code</th>
+                        <th style="padding:10px;">Item Name</th>
+                        <th style="padding:10px;">UOM</th>
+                        <th style="padding:10px;">Origin</th>
+                        <th style="padding:10px;">Price</th>
                     </tr>
                 </thead>
                 <tbody>`;
         items.forEach(i => {
             tableHtml += `
                 <tr style="border-bottom:1px solid #eee;">
-                    <td style="padding:8px;">${i['Item Code']}</td>
-                    <td style="padding:8px;"><strong>${i['Item Name']}</strong></td>
-                    <td style="padding:8px;">${i['UOM']}</td>
-                    <td style="padding:8px;">$${parseFloat(i['Price (USD)']).toFixed(2)}</td>
+                    <td style="padding:10px;">${i['Item Code']}</td>
+                    <td style="padding:10px;"><strong>${i['Item Name']}</strong></td>
+                    <td style="padding:10px;">${i['UOM']}</td>
+                    <td style="padding:10px;"><span class="badge badge-green">${i['Origin']}</span></td>
+                    <td style="padding:10px;">$${parseFloat(i['Price (USD)']).toFixed(2)}</td>
                 </tr>`;
         });
-        tableHtml += 'tbody></table>';
+        tableHtml += `</tbody></table>`;
         showModal(`Items Supplied by ${supplierName}`, tableHtml);
     }
 
