@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F&B Price Analysis & Supplier Finder</title>
+    <!-- Include SheetJS library for processing Excel files directly in browser -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+        }
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #27ae60;
+            color: white;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        button:hover:not(:disabled) {
+            background-color: #219150;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        .status {
+            font-weight: bold;
+            color: #e67e22;
+        }
+        .success {
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🍽️ F&B Price Analysis & Supplier Selector</h2>
+
+    <div class="section">
+        <label for="masterFile">1. Upload Master List Excel (`Master list.xlsx`):</label>
+        <input type="file" id="masterFile" accept=".xlsx, .xls">
+        <div id="masterStatus" class="status">Waiting for Master List...</div>
+    </div>
+
+    <div class="section">
+        <label for="requestFile">2. Upload Storekeeper Request Excel File:</label>
+        <input type="file" id="requestFile" accept=".xlsx, .xls" disabled>
+        <div id="requestStatus" class="status"></div>
+    </div>
+
+    <div class="section">
+        <button id="processBtn" disabled onclick="processFiles()">🔍 Analyze & Select Cheapest Suppliers</button>
+        <button id="downloadBtn" style="display:none;" onclick="downloadExcel()">📥 Download Analyzed Excel Order</button>
+    </div>
+
+    <div id="results"></div>
+</div>
+
+<script>
+    let masterData = [];
+    let requestData = [];
+    let analyzedResults = [];
+
+    // 1. Handle Master List Upload
+    document.getElementById('masterFile').addEventListener('change', function(e) {
+        let file = e.target.files[0];
+        if (!file) return;
+
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let data = new Uint8Array(e.target.result);
+            let workbook = XLSX.read(data, {type: 'array'});
+            let sheetName = workbook.SheetNames[0];
+            masterData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+            
+            document.getElementById('masterStatus').className = "status success";
+            document.getElementById('masterStatus').innerText = `✅ Master List Loaded (${masterData.length} records found).`;
+            document.getElementById('requestFile').disabled = false;
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    // 2. Handle Request File Upload
+    document.getElementById('requestFile').addEventListener('change', function(e) {
+        let file = e.target.files[0];
+        if (!file) return;
+
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let data = new Uint8Array(e.target.result);
+            let workbook = XLSX.read(data, {type: 'array'});
+            let sheetName = workbook.SheetNames[0];
+            requestData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+            document.getElementById('requestStatus').className = "status success";
+            document.getElementById('requestStatus').innerText = `✅ Request File Loaded (${requestData.length} items requested).`;
+            document.getElementById('processBtn').disabled = false;
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    // 3. Process Price Analysis & Select Cheap Supplier
+    function processFiles() {
+        analyzedResults = [];
+
+        requestData.forEach(req => {
+            let itemCode = req['Item Code'];
+            let reqQty = parseFloat(req['Requested Qty'] || req['Qty'] || 0);
+
+            // Filter master list for matching Item Code
+            let matches = masterData.filter(m => m['Item Code'] === itemCode);
+
+            if (matches.length > 0) {
+                // Find lowest price
+                matches.sort((a, b) => parseFloat(a['Price (USD)']) - parseFloat(b['Price (USD)']));
+                let cheapest = matches[0];
+
+                let unitPrice = parseFloat(cheapest['Price (USD)']);
+                let totalCost = reqQty * unitPrice;
+
+                analyzedResults.push({
+                    'Item Code': itemCode,
+                    'Item Name': cheapest['Item Name'],
+                    'UOM': cheapest['UOM'],
+                    'Requested Qty': reqQty,
+                    'Cheapest Supplier': cheapest['Supplier'],
+                    'Unit Price (USD)': unitPrice,
+                    'Total Cost (USD)': parseFloat(totalCost.toFixed(2)),
+                    'Origin': cheapest['Origin']
+                });
+            } else {
+                // Item code not found in master list
+                analyzedResults.push({
+                    'Item Code': itemCode,
+                    'Item Name': req['Item Name'] || 'Not Found',
+                    'UOM': req['UOM'] || 'N/A',
+                    'Requested Qty': reqQty,
+                    'Cheapest Supplier': 'NOT FOUND IN MASTER LIST',
+                    'Unit Price (USD)': 0,
+                    'Total Cost (USD)': 0,
+                    'Origin': 'N/A'
+                });
+            }
+        });
+
+        displayResultsTable(analyzedResults);
+        document.getElementById('downloadBtn').style.display = 'inline-block';
+    }
+
+    // 4. Render Table in Browser
+    function displayResultsTable(data) {
+        let resultsDiv = document.getElementById('results');
+        let html = `<h3>Optimized Purchase Order Preview</h3>`;
+        html += `<table><tr>
+                    <th>Item Code</th>
+                    <th>Item Name</th>
+                    <th>UOM</th>
+                    <th>Qty</th>
+                    <th>Cheapest Supplier</th>
+                    <th>Price (USD)</th>
+                    <th>Total (USD)</th>
+                 </tr>`;
+
+        let totalOrderValue = 0;
+
+        data.forEach(row => {
+            totalOrderValue += row['Total Cost (USD)'];
+            html += `<tr>
+                        <td>${row['Item Code']}</td>
+                        <td>${row['Item Name']}</td>
+                        <td>${row['UOM']}</td>
+                        <td>${row['Requested Qty']}</td>
+                        <td><strong>${row['Cheapest Supplier']}</strong></td>
+                        <td>$${row['Unit Price (USD)'].toFixed(2)}</td>
+                        <td>$${row['Total Cost (USD)'].toFixed(2)}</td>
+                     </tr>`;
+        });
+
+        html += `</table>`;
+        html += `<h3 style="text-align:right; color:#27ae60;">Total Order Value: $${totalOrderValue.toFixed(2)}</h3>`;
+        resultsDiv.innerHTML = html;
+    }
+
+    // 5. Download Analyzed Result as Excel
+    function downloadExcel() {
+        let worksheet = XLSX.utils.json_to_sheet(analyzedResults);
+        let workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Optimized_PO");
+
+        XLSX.writeFile(workbook, "Optimized_Purchase_Order.xlsx");
+    }
+</script>
+
+</body>
+</html>
