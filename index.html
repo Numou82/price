@@ -186,6 +186,7 @@
             border-radius: 6px;
             font-weight: 600;
             transition: 0.2s;
+            border: none;
         }
 
         .btn-green {
@@ -300,7 +301,7 @@
 
         .controls select {
             flex: 1;
-            min-width: 150px;
+            min-width: 140px;
         }
 
         /* Request Box */
@@ -553,6 +554,12 @@
             <select id="originFilter" onchange="filterItems()">
                 <option value="">All Origins</option>
             </select>
+            <select id="sortFilter" onchange="filterItems()">
+                <option value="price-asc" selected>Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="name-asc">Name: A to Z</option>
+            </select>
+            <button class="custom-file-upload btn-green" onclick="exportItemsToExcel()">📊 Export Items to Excel</button>
         </div>
 
         <div class="table-container">
@@ -797,6 +804,7 @@
         {"Item Code":"FB050","Item Name":"Mineral Water 500ml","UOM":"Bottle","Origin":"Local","Price (KWD)":0.110,"Supplier":"City Beverage Supply"}
     ];
 
+    let currentFilteredItems = [];
     let processedRequestData = [];
     let countChartInstance = null;
     let priceChartInstance = null;
@@ -817,92 +825,96 @@
         renderKPIs();
         renderDropdowns();
         renderSupplierAnalysis();
-        renderItemsTable(masterData);
+        filterItems(); // Renders with default price low-to-high sorting
     }
 
     function renderKPIs() {
-        const totalItems = masterData.length;
+        document.getElementById('kpiTotalItems').innerText = masterData.length;
         const suppliers = [...new Set(masterData.map(d => d.Supplier))];
-        const origins = [...new Set(masterData.map(d => d.Origin))];
-        const avgPrice = masterData.reduce((acc, curr) => acc + getItemPrice(curr), 0) / (totalItems || 1);
-
-        document.getElementById('kpiTotalItems').innerText = totalItems;
         document.getElementById('kpiTotalSuppliers').innerText = suppliers.length;
+
+        const sumPrice = masterData.reduce((acc, curr) => acc + getItemPrice(curr), 0);
+        const avg = masterData.length ? (sumPrice / masterData.length).toFixed(3) : "0.000";
+        document.getElementById('kpiAvgPrice').innerText = avg + ' KWD';
+
+        const origins = [...new Set(masterData.map(d => d.Origin))];
         document.getElementById('kpiTotalOrigins').innerText = origins.length;
-        document.getElementById('kpiAvgPrice').innerText = avgPrice.toFixed(3) + ' KWD';
     }
 
     function renderDropdowns() {
         const suppliers = [...new Set(masterData.map(d => d.Supplier))].sort();
+        const supplierSelect = document.getElementById('supplierFilter');
+        supplierSelect.innerHTML = '<option value="">All Suppliers</option>';
+        suppliers.forEach(s => {
+            supplierSelect.innerHTML += `<option value="${s}">${s}</option>`;
+        });
+
         const origins = [...new Set(masterData.map(d => d.Origin))].sort();
-
-        const suppSelect = document.getElementById('supplierFilter');
-        suppSelect.innerHTML = '<option value="">All Suppliers</option>';
-        suppliers.forEach(s => suppSelect.innerHTML += `<option value="${s}">${s}</option>`);
-
-        const origSelect = document.getElementById('originFilter');
-        origSelect.innerHTML = '<option value="">All Origins</option>';
-        origins.forEach(o => origSelect.innerHTML += `<option value="${o}">${o}</option>`);
+        const originSelect = document.getElementById('originFilter');
+        originSelect.innerHTML = '<option value="">All Origins</option>';
+        origins.forEach(o => {
+            originSelect.innerHTML += `<option value="${o}">${o}</option>`;
+        });
     }
 
     function renderSupplierAnalysis() {
-        const supplierMap = {};
-
+        const supplierStats = {};
         masterData.forEach(item => {
-            const supp = item.Supplier;
+            const s = item.Supplier;
             const price = getItemPrice(item);
-            if (!supplierMap[supp]) {
-                supplierMap[supp] = { count: 0, totalPrice: 0, prices: [], origins: new Set() };
+            if (!supplierStats[s]) {
+                supplierStats[s] = { count: 0, totalPrice: 0, prices: [], origins: new Set() };
             }
-            supplierMap[supp].count++;
-            supplierMap[supp].totalPrice += price;
-            supplierMap[supp].prices.push(price);
-            supplierMap[supp].origins.add(item.Origin);
+            supplierStats[s].count++;
+            supplierStats[s].totalPrice += price;
+            supplierStats[s].prices.push(price);
+            if (item.Origin) supplierStats[s].origins.add(item.Origin);
         });
 
-        const supplierNames = Object.keys(supplierMap);
-        const itemCounts = supplierNames.map(s => supplierMap[s].count);
-        const avgPrices = supplierNames.map(s => (supplierMap[s].totalPrice / supplierMap[s].count).toFixed(3));
+        const labels = Object.keys(supplierStats);
+        const counts = labels.map(l => supplierStats[l].count);
+        const avgPrices = labels.map(l => (supplierStats[l].totalPrice / supplierStats[l].count).toFixed(3));
 
+        // Render Table
         const tbody = document.getElementById('supplierTableBody');
         tbody.innerHTML = '';
-        supplierNames.forEach(s => {
-            const stats = supplierMap[s];
-            const avg = (stats.totalPrice / stats.count).toFixed(3);
-            const min = Math.min(...stats.prices).toFixed(3);
-            const max = Math.max(...stats.prices).toFixed(3);
-            const originsStr = Array.from(stats.origins).join(', ');
+        labels.forEach(s => {
+            const stat = supplierStats[s];
+            const avg = (stat.totalPrice / stat.count).toFixed(3);
+            const min = Math.min(...stat.prices).toFixed(3);
+            const max = Math.max(...stat.prices).toFixed(3);
+            const primaryOrigins = Array.from(stat.origins).slice(0, 3).join(', ');
 
             tbody.innerHTML += `
                 <tr>
                     <td><strong>${s}</strong></td>
                     <td>
-                        <span class="badge badge-blue badge-interactive" onclick="showSupplierItemsModal('${s.replace(/'/g, "\\'")}')">
-                            ${stats.count} item(s) 🔍
+                        <span class="badge badge-blue badge-interactive" onclick="showSupplierItemsModal('${s}')">
+                            ${stat.count} Items 🔍
                         </span>
                     </td>
                     <td>${avg} KWD</td>
                     <td>${min} KWD</td>
                     <td>${max} KWD</td>
-                    <td><span class="badge badge-green">${originsStr}</span></td>
-                </tr>
-            `;
+                    <td><span class="badge badge-green">${primaryOrigins}</span></td>
+                </tr>`;
         });
 
-        renderCharts(supplierNames, itemCounts, avgPrices);
+        // Charts
+        renderCharts(labels, counts, avgPrices);
     }
 
-    function renderCharts(labels, counts, prices) {
+    function renderCharts(labels, counts, avgPrices) {
         if (countChartInstance) countChartInstance.destroy();
         if (priceChartInstance) priceChartInstance.destroy();
 
-        const ctx1 = document.getElementById('supplierCountChart').getContext('2d');
-        countChartInstance = new Chart(ctx1, {
+        const ctxCount = document.getElementById('supplierCountChart').getContext('2d');
+        countChartInstance = new Chart(ctxCount, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Items Supplied',
+                    label: 'Items Offered',
                     data: counts,
                     backgroundColor: '#3498db'
                 }]
@@ -910,18 +922,17 @@
             options: { responsive: true, plugins: { legend: { display: false } } }
         });
 
-        const ctx2 = document.getElementById('supplierPriceChart').getContext('2d');
-        priceChartInstance = new Chart(ctx2, {
+        const ctxPrice = document.getElementById('supplierPriceChart').getContext('2d');
+        priceChartInstance = new Chart(ctxPrice, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'Avg Price (KWD)',
-                    data: prices,
+                    data: avgPrices,
                     borderColor: '#2ecc71',
-                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
-                    fill: true,
-                    tension: 0.2
+                    backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                    fill: true
                 }]
             },
             options: { responsive: true, plugins: { legend: { display: false } } }
@@ -934,14 +945,13 @@
         data.forEach(item => {
             tbody.innerHTML += `
                 <tr>
-                    <td><strong>${item['Item Code'] || ''}</strong></td>
-                    <td>${item['Item Name'] || ''}</td>
-                    <td>${item['UOM'] || ''}</td>
-                    <td>${item['Origin'] || ''}</td>
-                    <td><strong>${getItemPrice(item).toFixed(3)} KWD</strong></td>
-                    <td>${item['Supplier'] || ''}</td>
-                </tr>
-            `;
+                    <td>${item['Item Code'] || '-'}</td>
+                    <td><strong>${item['Item Name']}</strong></td>
+                    <td>${item['UOM'] || '-'}</td>
+                    <td><span class="badge badge-green">${item['Origin'] || '-'}</span></td>
+                    <td>${getItemPrice(item).toFixed(3)} KWD</td>
+                    <td>${item['Supplier']}</td>
+                </tr>`;
         });
     }
 
@@ -949,48 +959,82 @@
         const search = document.getElementById('searchInput').value.toLowerCase();
         const supplier = document.getElementById('supplierFilter').value;
         const origin = document.getElementById('originFilter').value;
+        const sortOrder = document.getElementById('sortFilter').value;
 
-        const filtered = masterData.filter(item => {
-            const matchesSearch = (item['Item Name'] || '').toLowerCase().includes(search) ||
-                                  (item['Item Code'] || '').toLowerCase().includes(search) ||
-                                  (item['Supplier'] || '').toLowerCase().includes(search);
-            const matchesSupplier = !supplier || item.Supplier === supplier;
-            const matchesOrigin = !origin || item.Origin === origin;
-            return matchesSearch && matchesSupplier && matchesOrigin;
+        let filtered = masterData.filter(item => {
+            const matchSearch = (item['Item Name'] || '').toLowerCase().includes(search) ||
+                                (item['Item Code'] || '').toLowerCase().includes(search) ||
+                                (item['Supplier'] || '').toLowerCase().includes(search);
+            const matchSupplier = supplier === '' || item['Supplier'] === supplier;
+            const matchOrigin = origin === '' || item['Origin'] === origin;
+            return matchSearch && matchSupplier && matchOrigin;
         });
 
+        // Sorting Logic
+        if (sortOrder === 'price-asc') {
+            filtered.sort((a, b) => getItemPrice(a) - getItemPrice(b));
+        } else if (sortOrder === 'price-desc') {
+            filtered.sort((a, b) => getItemPrice(b) - getItemPrice(a));
+        } else if (sortOrder === 'name-asc') {
+            filtered.sort((a, b) => (a['Item Name'] || '').localeCompare(b['Item Name'] || ''));
+        }
+
+        currentFilteredItems = filtered;
         renderItemsTable(filtered);
     }
 
-    document.getElementById('excelFile').addEventListener('change', function(e) {
+    function exportItemsToExcel() {
+        if (!currentFilteredItems || currentFilteredItems.length === 0) {
+            alert("No items available to export!");
+            return;
+        }
+
+        const exportData = currentFilteredItems.map(item => ({
+            'Item Code': item['Item Code'] || '',
+            'Item Name': item['Item Name'] || '',
+            'UOM': item['UOM'] || '',
+            'Origin': item['Origin'] || '',
+            'Price (KWD)': getItemPrice(item).toFixed(3),
+            'Supplier': item['Supplier'] || ''
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Master Price List");
+        XLSX.writeFile(wb, "Item_Price_Comparison.xlsx");
+    }
+
+    // Master File Upload
+    document.getElementById('excelFile').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function(evt) {
-            const data = new Uint8Array(evt.target.result);
+        reader.onload = (event) => {
+            const data = new Uint8Array(event.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            let json = XLSX.utils.sheet_to_json(worksheet);
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(sheet);
 
-            json = json.filter(row => row['Item Code'] && row['Item Code'] !== 'Item Code');
-            initDashboard(json);
+            if (json.length > 0) {
+                initDashboard(json);
+                alert("Master sheet uploaded and dashboard updated!");
+            }
         };
         reader.readAsArrayBuffer(file);
     });
 
-    document.getElementById('requestFile').addEventListener('change', function(e) {
+    // Store Request Upload & Cheap Supplier Finder
+    document.getElementById('requestFile').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function(evt) {
-            const data = new Uint8Array(evt.target.result);
+        reader.onload = (event) => {
+            const data = new Uint8Array(event.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet);
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(sheet);
 
             processStoreRequest(json);
         };
@@ -1002,97 +1046,78 @@
         const tbody = document.getElementById('requestTableBody');
         tbody.innerHTML = '';
 
-        requestData.forEach(req => {
-            const reqItem = req['Item Name'] || req['Item'] || req['Description'] || '';
-            const qty = parseFloat(req['Quantity'] || req['Qty'] || req['QTY'] || 1);
+        requestData.forEach(row => {
+            const itemName = row['Item Name'] || row['Item'] || row['Description'];
+            const qty = parseFloat(row['Quantity'] || row['Qty'] || 0);
 
-            if (!reqItem) return;
+            if (!itemName) return;
 
+            // Find matching suppliers in Master Sheet
             const matches = masterData.filter(m => 
-                (m['Item Name'] || '').toLowerCase().trim() === reqItem.toLowerCase().trim()
+                (m['Item Name'] || '').toLowerCase().trim() === itemName.toLowerCase().trim()
             );
 
             if (matches.length > 0) {
-                const cheapestMatch = matches.reduce((min, curr) => 
-                    (getItemPrice(curr) < getItemPrice(min)) ? curr : min
-                , matches[0]);
-
-                const unitPrice = getItemPrice(cheapestMatch);
+                // Find cheapest supplier
+                matches.sort((a, b) => getItemPrice(a) - getItemPrice(b));
+                const cheapest = matches[0];
+                const unitPrice = getItemPrice(cheapest);
                 const totalPrice = unitPrice * qty;
-                const uom = cheapestMatch['UOM'] || req['UOM'] || 'N/A';
-                const cheapSupplier = cheapestMatch['Supplier'];
 
                 processedRequestData.push({
-                    "Item Name": reqItem,
-                    "Total Request Qty": qty,
-                    "UOM": uom,
-                    "Cheap Supplier": cheapSupplier,
-                    "Per Cheap Unit Price (KWD)": unitPrice,
-                    "Total Price (KWD)": totalPrice,
-                    "Found": true
+                    'Item Name': itemName,
+                    'Qty': qty,
+                    'UOM': cheapest['UOM'] || 'Unit',
+                    'Cheap Supplier': cheapest['Supplier'],
+                    'Unit Price': unitPrice,
+                    'Total Price': totalPrice,
+                    'Status': 'Found'
                 });
 
                 tbody.innerHTML += `
                     <tr>
-                        <td><strong>${reqItem}</strong></td>
+                        <td><strong>${itemName}</strong></td>
                         <td>${qty}</td>
-                        <td>${uom}</td>
-                        <td><span class="badge badge-green">${cheapSupplier}</span></td>
+                        <td>${cheapest['UOM'] || '-'}</td>
+                        <td><span class="badge badge-blue">${cheapest['Supplier']}</span></td>
                         <td>${unitPrice.toFixed(3)} KWD</td>
                         <td><strong>${totalPrice.toFixed(3)} KWD</strong></td>
-                        <td><span class="badge badge-blue">Matched</span></td>
-                    </tr>
-                `;
+                        <td><span class="badge badge-green">Matched</span></td>
+                    </tr>`;
             } else {
                 processedRequestData.push({
-                    "Item Name": reqItem,
-                    "Total Request Qty": qty,
-                    "UOM": req['UOM'] || 'N/A',
-                    "Cheap Supplier": "N/A",
-                    "Per Cheap Unit Price (KWD)": 0,
-                    "Total Price (KWD)": 0,
-                    "Found": false
+                    'Item Name': itemName,
+                    'Qty': qty,
+                    'UOM': '-',
+                    'Cheap Supplier': 'N/A',
+                    'Unit Price': 0,
+                    'Total Price': 0,
+                    'Status': 'Not Found'
                 });
 
                 tbody.innerHTML += `
                     <tr>
-                        <td><strong>${reqItem}</strong></td>
+                        <td><strong>${itemName}</strong></td>
                         <td>${qty}</td>
-                        <td>${req['UOM'] || 'N/A'}</td>
-                        <td><span class="badge badge-red">No Supplier Found</span></td>
+                        <td>-</td>
+                        <td><em>No supplier found</em></td>
                         <td>-</td>
                         <td>-</td>
-                        <td><span class="badge badge-red">Missing</span></td>
-                    </tr>
-                `;
+                        <td><span class="badge badge-red">Not Found</span></td>
+                    </tr>`;
             }
         });
 
-        if (processedRequestData.length > 0) {
-            document.getElementById('exportBtn').style.display = 'inline-block';
-        }
+        document.getElementById('exportBtn').style.display = 'inline-block';
     }
 
     function exportCheapestQuote() {
-        if (!processedRequestData || processedRequestData.length === 0) {
-            alert('No processed request data available for export.');
-            return;
-        }
+        if (processedRequestData.length === 0) return;
 
-        const exportRows = processedRequestData.map(item => ({
-            "Item Name": item["Item Name"],
-            "Total Request Qty": item["Total Request Qty"],
-            "UOM": item["UOM"],
-            "Cheap Supplier": item["Cheap Supplier"],
-            "Per Cheap Unit Price (KWD)": item["Per Cheap Unit Price (KWD)"],
-            "Total Price (KWD)": item["Total Price (KWD)"]
-        }));
-
-        const worksheet = XLSX.utils.json_to_sheet(exportRows);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Cheapest Suppliers Quote");
-
-        XLSX.writeFile(workbook, "Cheapest_Supplier_Quote_KWD.xlsx");
+        const ws = XLSX.utils.json_to_sheet(processedRequestData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Cheapest Quote");
+        XLSX.writeFile(wb, "Cheapest_Supplier_Quote.xlsx");
     }
 </script>
 </body>
