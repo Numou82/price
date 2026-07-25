@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Light Fields Foodstuff - Price Analysis & Supplier Finder</title>
+    <title>Light Fields Foodstuff - Management System</title>
     <!-- SheetJS for processing Excel files -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- Chart.js for visualization -->
@@ -11,6 +11,7 @@
     <style>
         :root {
             --primary: #2c3e50;
+            --sidebar-bg: #1a252f;
             --accent: #3498db;
             --success: #2ecc71;
             --warning: #f39c12;
@@ -22,13 +23,17 @@
             --body-bg: #f4f7f6;
         }
 
+        * { box-sizing: border-box; }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             background-color: var(--body-bg);
             color: var(--text-dark);
-            transition: background-color 0.4s ease, color 0.4s ease;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
         }
 
         /* LOGIN OVERLAY */
@@ -42,7 +47,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 2000;
         }
 
         .login-card {
@@ -55,153 +60,111 @@
             max-width: 380px;
         }
 
-        .login-card h2 {
-            margin-top: 0;
-            color: var(--primary);
-            font-size: 22px;
-        }
-
-        .login-card p {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
+        .login-card h2 { margin-top: 0; color: var(--primary); font-size: 22px; }
+        .login-card p { color: #666; font-size: 14px; margin-bottom: 20px; }
         .login-card input, .login-card select {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 15px;
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            border: 1px solid #ccc; border-radius: 6px; font-size: 15px;
         }
-
         .login-card button {
-            width: 100%;
-            padding: 12px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.2s;
+            width: 100%; padding: 12px; background: var(--accent);
+            color: white; border: none; border-radius: 6px;
+            font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s;
         }
+        .login-card button:hover { background: #2980b9; }
+        .error-msg { color: var(--danger); font-size: 13px; margin-bottom: 10px; display: none; }
 
-        .login-card button:hover {
-            background: #2980b9;
-        }
-
-        .error-msg {
-            color: var(--danger);
-            font-size: 13px;
-            margin-bottom: 10px;
-            display: none;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
-            background: linear-gradient(135deg, var(--primary), #1a252f);
-            color: white;
-            padding: 25px 30px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        /* LEFT SIDEBAR NAVIGATION */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: #ffffff;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            flex-shrink: 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+
+        .sidebar-header h2 { margin: 0; font-size: 18px; color: #fff; }
+        .sidebar-header p { margin: 5px 0 0 0; font-size: 11px; color: #bdc3c7; }
+
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            padding: 14px 20px;
+            display: flex;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
+            gap: 12px;
             cursor: pointer;
-            user-select: none;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        header:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 26px;
-        }
-
-        header p {
-            margin: 5px 0 0 0;
-            opacity: 0.8;
+            color: #ecf0f1;
             font-size: 14px;
+            font-weight: 500;
+            border-left: 4px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-left-color: var(--accent);
+            color: #ffffff;
+        }
+
+        .sidebar-footer {
+            padding: 15px 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 12px;
         }
 
         .user-badge {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 10px;
             border-radius: 20px;
-            font-size: 13px;
             font-weight: 600;
-            display: inline-block;
-            margin-bottom: 5px;
-        }
-
-        .click-hint {
-            font-size: 11px;
-            background: rgba(255,255,255,0.15);
-            padding: 3px 8px;
-            border-radius: 4px;
-            margin-top: 6px;
-            display: inline-block;
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .upload-section {
-            background: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            border: 2px dashed var(--accent);
             text-align: center;
-            color: var(--text-dark);
+            margin-bottom: 8px;
         }
 
-        .upload-section input[type="file"] {
-            display: none;
+        /* MAIN CONTENT AREA */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
         }
 
-        .custom-file-upload {
-            display: inline-block;
-            padding: 8px 16px;
-            cursor: pointer;
-            background-color: var(--accent);
-            color: white;
-            border-radius: 6px;
-            font-weight: 600;
-            transition: 0.2s;
-            border: none;
+        header {
+            background: #ffffff;
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .btn-green {
-            background-color: var(--success);
+        header h1 { margin: 0; font-size: 20px; color: var(--primary); }
+
+        .container {
+            padding: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
         }
 
-        .btn-green:hover {
-            background-color: #27ae60;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .custom-file-upload:hover {
-            background-color: #2980b9;
-        }
-
-        /* KPI Cards */
+        /* CARDS & TABLES */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -215,239 +178,105 @@
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             border-left: 5px solid var(--accent);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            cursor: pointer;
         }
 
-        .kpi-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-        }
+        .kpi-card h3 { margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; color: #7f8c8d; }
+        .kpi-card .value { font-size: 24px; font-weight: bold; color: var(--primary); }
 
-        .kpi-card h3 {
-            margin: 0 0 8px 0;
-            font-size: 13px;
-            text-transform: uppercase;
-            color: #7f8c8d;
-            letter-spacing: 0.5px;
-        }
-
-        .kpi-card .value {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #ddd;
-        }
-
-        .tab-btn {
-            padding: 12px 24px;
-            border: none;
-            background: none;
-            font-size: 16px;
-            font-weight: 600;
-            color: #7f8c8d;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -2px;
-            transition: 0.2s;
-        }
-
-        .tab-btn.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Controls / Search */
-        .controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-            transition: background-color 0.4s ease;
-            align-items: center;
-        }
-
-        .controls input, .controls select {
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .controls input[type="text"] {
-            flex: 2;
-            min-width: 200px;
-        }
-
-        .controls select {
-            flex: 1;
-            min-width: 140px;
-        }
-
-        /* Request Box */
-        .request-banner {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        /* Tables */
         .table-container {
             background: var(--card-bg);
             border-radius: 10px;
             overflow-x: auto;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             margin-bottom: 25px;
-            transition: background-color 0.4s ease;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 14px;
-        }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        th, td { padding: 14px 18px; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--bg-light); color: var(--primary); font-weight: 700; }
+        tr:hover { background-color: rgba(0, 0, 0, 0.02); }
 
-        th, td {
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        th {
-            background-color: var(--bg-light);
-            color: var(--primary);
-            font-weight: 700;
-        }
-
-        tr:hover {
-            background-color: rgba(0, 0, 0, 0.02);
-        }
-
-        .badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        .badge-interactive {
-            cursor: pointer;
-            transition: transform 0.15s ease, opacity 0.15s ease;
-        }
-
-        .badge-interactive:hover {
-            transform: scale(1.05);
-            opacity: 0.85;
-        }
-
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-block; }
         .badge-green { background-color: #e8f8f5; color: #117a65; }
         .badge-blue { background-color: #ebf5fb; color: #2980b9; }
+        .badge-orange { background-color: #fef9e7; color: #b7950b; }
         .badge-red { background-color: #fadbd8; color: #78281f; }
 
-        /* Chart Layout */
+        .controls {
+            display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;
+            background: var(--card-bg); padding: 15px; border-radius: 8px; align-items: center;
+        }
+
+        .controls input, .controls select, .form-control {
+            padding: 10px; border: 1px solid var(--border-color);
+            border-radius: 6px; font-size: 14px; outline: none;
+        }
+
+        .btn {
+            padding: 10px 18px; border-radius: 6px; border: none; font-weight: 600;
+            cursor: pointer; background-color: var(--accent); color: white; transition: 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-green { background-color: var(--success); }
+        .btn-orange { background-color: var(--warning); }
+
+        .form-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px; margin-bottom: 15px;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #555; }
+
         .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px; margin-bottom: 25px;
         }
 
         .chart-card {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 10px;
+            background: var(--card-bg); padding: 20px; border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: background-color 0.4s ease;
         }
 
-        .chart-card h3 {
-            margin-top: 0;
-            color: var(--primary);
-            font-size: 16px;
+        /* NOTIFICATIONS TOAST POPUP */
+        #notificationContainer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast-popup {
+            background: #ffffff;
+            border-left: 5px solid var(--accent);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            padding: 15px 20px;
+            border-radius: 8px;
+            min-width: 300px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
         /* MODAL POPUP */
         .modal {
-            display: none;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
+            display: none; position: fixed; z-index: 1001; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center;
         }
 
         .modal-content {
-            background-color: #fff;
-            padding: 25px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 650px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            position: relative;
+            background-color: #fff; padding: 25px; border-radius: 10px;
+            width: 90%; max-width: 650px; max-height: 80vh; overflow-y: auto; position: relative;
         }
 
-        .close-modal {
-            position: absolute;
-            right: 15px;
-            top: 15px;
-            font-size: 22px;
-            font-weight: bold;
-            color: #aaa;
-            cursor: pointer;
-        }
-
-        .close-modal:hover {
-            color: #000;
-        }
-
-        body.dark-theme th {
-            background-color: #2c3e50;
-            color: #ecf0f1;
-        }
-        body.dark-theme tr:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-        body.dark-theme .kpi-card h3 {
-            color: #bdc3c7;
-        }
-        body.dark-theme .modal-content {
-            background-color: #0f172a;
-            color: #fff;
-        }
+        .close-modal { position: absolute; right: 15px; top: 15px; font-size: 22px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -458,8 +287,8 @@
         <h2>Light Fields Foodstuff</h2>
         <p>Login to Access Dashboard</p>
         <select id="userSelect">
-            <option value="Yousef">Yousef</option>
-            <option value="Amir">Amir</option>
+            <option value="Yousef">Yousef (Purchase Team)</option>
+            <option value="Amir">Amir (Store Manager)</option>
         </select>
         <input type="password" id="userPassword" placeholder="Enter Password" onkeyup="if(event.key==='Enter') loginUser()">
         <div id="loginError" class="error-msg">Incorrect password!</div>
@@ -467,156 +296,226 @@
     </div>
 </div>
 
-<div class="container">
-    <header id="appHeader" title="Click to change background theme">
+<!-- Left Vertical Sidebar Navigation -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h2>Light Fields</h2>
+        <p>Foodstuff Operations Portal</p>
+    </div>
+    <ul class="nav-list">
+        <li class="nav-item active" onclick="switchTab('dashboard-tab', this)">
+            <span>📈</span> Executive Dashboard
+        </li>
+        <li class="nav-item" onclick="switchTab('order-tracker-tab', this)">
+            <span>📦</span> Store Order Tracker
+        </li>
+        <li class="nav-item" onclick="switchTab('supplier-tab', this)">
+            <span>📊</span> Supplier Analysis
+        </li>
+        <li class="nav-item" onclick="switchTab('items-tab', this)">
+            <span>📋</span> Item Comparison
+        </li>
+        <li class="nav-item" onclick="switchTab('request-tab', this)">
+            <span>🛒</span> Store Request & Quotes
+        </li>
+    </ul>
+    <div class="sidebar-footer">
+        <div class="user-badge">👤 <span id="currentUserDisplay">Guest</span></div>
+        <button class="btn btn-orange" style="width:100%; font-size:12px;" onclick="location.reload()">🔒 Logout</button>
+    </div>
+</div>
+
+<!-- Main Right Area -->
+<div class="main-wrapper">
+    <header>
+        <h1 id="pageTitle">Executive Dashboard</h1>
         <div>
-            <h1>Light Fields Foodstuff</h1>
-            <p>Master Data & Vendor Insights Dashboard</p>
-            <span class="click-hint">💡 Click header to toggle theme background</span>
-        </div>
-        <div class="header-actions">
-            <div>
-                <div class="user-badge">👤 User: <span id="currentUserDisplay">Guest</span></div>
-            </div>
-            <div class="upload-section" onclick="event.stopPropagation();">
-                <label for="excelFile" class="custom-file-upload">📂 Upload New Master Sheet</label>
-                <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
-            </div>
+            <label for="excelFile" class="btn btn-green" style="font-size:13px; cursor:pointer;">📂 Upload Master Sheet</label>
+            <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" style="display:none;">
         </div>
     </header>
 
-    <!-- Key Metrics -->
-    <div class="kpi-grid">
-        <div class="kpi-card" style="border-left-color: #3498db;" onclick="switchTab('items-tab', document.querySelectorAll('.tab-btn')[1])">
-            <h3>Total Master Items</h3>
-            <div class="value" id="kpiTotalItems">0</div>
-        </div>
-        <div class="kpi-card" style="border-left-color: #2ecc71;" onclick="showActiveSuppliersModal()">
-            <h3>Active Suppliers (Click to View)</h3>
-            <div class="value" id="kpiTotalSuppliers">0</div>
-        </div>
-        <div class="kpi-card" style="border-left-color: #f39c12;" onclick="switchTab('items-tab', document.querySelectorAll('.tab-btn')[1])">
-            <h3>Average Item Price</h3>
-            <div class="value" id="kpiAvgPrice">0.000 KWD</div>
-        </div>
-        <div class="kpi-card" style="border-left-color: #9b59b6;" onclick="showOriginsModal()">
-            <h3>Total Origins (Click to View)</h3>
-            <div class="value" id="kpiTotalOrigins">0</div>
-        </div>
-    </div>
+    <div class="container">
 
-    <!-- Navigation Tabs -->
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('supplier-tab', this)">📊 Supplier Analysis</button>
-        <button class="tab-btn" onclick="switchTab('items-tab', this)">📦 Item & Price Comparison</button>
-        <button class="tab-btn" onclick="switchTab('request-tab', this)">🛒 Store Request Analysis</button>
-    </div>
-
-    <!-- TAB 1: SUPPLIER ANALYSIS -->
-    <div id="supplier-tab" class="tab-content active">
-        <div class="charts-grid">
-            <div class="chart-card">
-                <h3>Items Offered per Supplier</h3>
-                <canvas id="supplierCountChart"></canvas>
+        <!-- TAB 0: DASHBOARD OVERVIEW -->
+        <div id="dashboard-tab" class="tab-content active">
+            <div class="kpi-grid">
+                <div class="kpi-card" style="border-left-color: #3498db;">
+                    <h3>Total Master Items</h3>
+                    <div class="value" id="kpiTotalItems">0</div>
+                </div>
+                <div class="kpi-card" style="border-left-color: #2ecc71;">
+                    <h3>Active Suppliers</h3>
+                    <div class="value" id="kpiTotalSuppliers">0</div>
+                </div>
+                <div class="kpi-card" style="border-left-color: #f39c12;">
+                    <h3>Pending Store Orders</h3>
+                    <div class="value" id="kpiPendingOrders">0</div>
+                </div>
+                <div class="kpi-card" style="border-left-color: #9b59b6;">
+                    <h3>Total Origins</h3>
+                    <div class="value" id="kpiTotalOrigins">0</div>
+                </div>
             </div>
-            <div class="chart-card">
-                <h3>Average Price (KWD) by Supplier</h3>
-                <canvas id="supplierPriceChart"></canvas>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>Items Offered per Supplier</h3>
+                    <canvas id="supplierCountChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Average Price (KWD) by Supplier</h3>
+                    <canvas id="supplierPriceChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Supplier Name</th>
-                        <th>Items Supplied (Click to view)</th>
-                        <th>Avg Item Price (KWD)</th>
-                        <th>Min Price (KWD)</th>
-                        <th>Max Price (KWD)</th>
-                        <th>Primary Origins</th>
-                    </tr>
-                </thead>
-                <tbody id="supplierTableBody">
-                    <!-- Populated dynamically -->
-                </tbody>
-            </table>
-        </div>
-    </div>
+        <!-- TAB: STORE ORDER TRACKER (PLACE & RECEIVE ORDERS) -->
+        <div id="order-tracker-tab" class="tab-content">
+            <div class="chart-card" style="margin-bottom:20px;">
+                <h3>📝 Place New Store Order</h3>
+                
+                <!-- Single Order Form -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Item Name (Type for Suggestions)</label>
+                        <input type="text" id="orderItemInput" list="masterItemsList" class="form-control" placeholder="Select Item..." onchange="autoFillItemDetails()">
+                        <datalist id="masterItemsList"></datalist>
+                    </div>
+                    <div class="form-group">
+                        <label>Origin</label>
+                        <input type="text" id="orderOriginInput" class="form-control" placeholder="Auto-filled / Enter Origin">
+                    </div>
+                    <div class="form-group">
+                        <label>UOM</label>
+                        <input type="text" id="orderUomInput" class="form-control" placeholder="Auto-filled / Enter UOM">
+                    </div>
+                    <div class="form-group">
+                        <label>Request Qty</label>
+                        <input type="number" id="orderQtyInput" class="form-control" placeholder="Quantity" min="1">
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button class="btn" onclick="submitSingleOrder()">🚀 Submit Store Order</button>
+                </div>
 
-    <!-- TAB 2: ITEM & PRICE COMPARISON -->
-    <div id="items-tab" class="tab-content">
-        <div class="controls">
-            <input type="text" id="searchInput" placeholder="Search item, code, or supplier..." oninput="filterItems()">
-            <select id="supplierFilter" onchange="filterItems()">
-                <option value="">All Suppliers</option>
-            </select>
-            <select id="originFilter" onchange="filterItems()">
-                <option value="">All Origins</option>
-            </select>
-            <select id="sortFilter" onchange="filterItems()">
-                <option value="price-asc" selected>Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="name-asc">Name: A to Z</option>
-            </select>
-            <button class="custom-file-upload btn-green" onclick="exportItemsToExcel()">📊 Export Items to Excel</button>
-        </div>
+                <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Item Code</th>
-                        <th>Item Name</th>
-                        <th>UOM</th>
-                        <th>Origin</th>
-                        <th>Price (KWD)</th>
-                        <th>Supplier</th>
-                    </tr>
-                </thead>
-                <tbody id="itemsTableBody">
-                    <!-- Populated dynamically -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- TAB 3: STORE REQUEST & CHEAPEST SUPPLIER FINDER -->
-    <div id="request-tab" class="tab-content">
-        <div class="request-banner">
-            <div>
-                <h3 style="margin:0 0 5px 0; color:var(--primary);">Upload Store Request Sheet</h3>
-                <p style="margin:0; font-size:13px; color:#666;">Upload an Excel file with columns: <strong>Item Name</strong> and <strong>Quantity</strong> (or <strong>Qty</strong>).</p>
+                <!-- Bulk Excel Upload Section -->
+                <h3>📥 Or Place Bulk Orders via Excel Upload</h3>
+                <p style="font-size:13px; color:#666;">Sheet must contain columns: <strong>Item Name</strong>, <strong>Quantity</strong> (or Qty), and optionally <strong>Origin</strong>, <strong>UOM</strong>.</p>
+                <div style="display:flex; gap:10px;">
+                    <label for="bulkOrderFile" class="btn btn-green">📄 Select & Upload Bulk Order File</label>
+                    <input type="file" id="bulkOrderFile" accept=".xlsx, .xls, .csv" style="display:none;">
+                </div>
             </div>
-            <div style="display:flex; gap:10px;">
-                <label for="requestFile" class="custom-file-upload">📥 Upload Store Request</label>
-                <input type="file" id="requestFile" accept=".xlsx, .xls, .csv">
-                <button id="exportBtn" class="custom-file-upload btn-green" onclick="exportCheapestQuote()" style="display:none; border:none;">💾 Export Cheapest Supplier Quote</button>
+
+            <!-- Orders Table & Receiving Actions -->
+            <div class="table-container">
+                <div style="padding:15px; background:var(--bg-light); border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0;">📦 Current Orders Log & Receiving Portal</h3>
+                    <button class="btn btn-green" onclick="exportCheapestOrdersExcel()">📊 Export Orders to Purchase Sheet (Cheapest Supplier)</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Item Name</th>
+                            <th>Origin</th>
+                            <th>UOM</th>
+                            <th>Requested Qty</th>
+                            <th>Received Qty</th>
+                            <th>Status</th>
+                            <th>Action / Receive</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody">
+                        <tr><td colspan="8" style="text-align:center;">No active orders yet.</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Item Name</th>
-                        <th>Total Request Qty</th>
-                        <th>UOM</th>
-                        <th>Cheap Supplier</th>
-                        <th>Per Cheap Unit Price (KWD)</th>
-                        <th>Total Price (KWD)</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="requestTableBody">
-                    <tr>
-                        <td colspan="7" style="text-align:center; color:#888;">No store request uploaded yet. Upload a sheet above to scan for the cheapest suppliers.</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- TAB 1: SUPPLIER ANALYSIS -->
+        <div id="supplier-tab" class="tab-content">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Supplier Name</th>
+                            <th>Items Supplied</th>
+                            <th>Avg Item Price (KWD)</th>
+                            <th>Min Price (KWD)</th>
+                            <th>Max Price (KWD)</th>
+                            <th>Primary Origins</th>
+                        </tr>
+                    </thead>
+                    <tbody id="supplierTableBody"></tbody>
+                </table>
+            </div>
         </div>
+
+        <!-- TAB 2: ITEM COMPARISON -->
+        <div id="items-tab" class="tab-content">
+            <div class="controls">
+                <input type="text" id="searchInput" placeholder="Search item, code, or supplier..." oninput="filterItems()">
+                <select id="supplierFilter" onchange="filterItems()"><option value="">All Suppliers</option></select>
+                <select id="originFilter" onchange="filterItems()"><option value="">All Origins</option></select>
+                <select id="sortFilter" onchange="filterItems()">
+                    <option value="price-asc" selected>Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                </select>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item Code</th>
+                            <th>Item Name</th>
+                            <th>UOM</th>
+                            <th>Origin</th>
+                            <th>Price (KWD)</th>
+                            <th>Supplier</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 3: STORE REQUEST ANALYSIS -->
+        <div id="request-tab" class="tab-content">
+            <div class="controls">
+                <div>
+                    <h3 style="margin:0 0 5px 0;">Automated Quote Finder</h3>
+                    <p style="margin:0; font-size:13px; color:#666;">Matches pending store orders automatically against Master Data to get the lowest prices.</p>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Origin</th>
+                            <th>Qty</th>
+                            <th>UOM</th>
+                            <th>Cheap Supplier</th>
+                            <th>Unit Price (KWD)</th>
+                            <th>Total Price (KWD)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requestTableBody">
+                        <tr><td colspan="7" style="text-align:center;">No pending orders to compute.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 </div>
+
+<!-- Realtime Notification Container -->
+<div id="notificationContainer"></div>
 
 <!-- Modal Dialog -->
 <div id="infoModal" class="modal">
@@ -628,11 +527,13 @@
 </div>
 
 <script>
-    // User Authentication Credentials
+    // System Users Credentials
     const userPasswords = {
         'Yousef': 'yousef123',
         'Amir': 'amir123'
     };
+
+    let currentUser = 'Guest';
 
     function loginUser() {
         const user = document.getElementById('userSelect').value;
@@ -640,468 +541,429 @@
         const errorDiv = document.getElementById('loginError');
 
         if (userPasswords[user] && pass === userPasswords[user]) {
+            currentUser = user;
             document.getElementById('currentUserDisplay').innerText = user;
             document.getElementById('loginOverlay').style.display = 'none';
             errorDiv.style.display = 'none';
+            initDashboard();
         } else {
             errorDiv.style.display = 'block';
         }
     }
 
-    // Modal Control Logic
-    function showModal(title, htmlContent) {
-        document.getElementById('modalTitle').innerText = title;
-        document.getElementById('modalBody').innerHTML = htmlContent;
-        document.getElementById('infoModal').style.display = 'flex';
-    }
-
-    function closeModal() {
-        document.getElementById('infoModal').style.display = 'none';
-    }
-
-    window.onclick = function(event) {
-        const modal = document.getElementById('infoModal');
-        if (event.target === modal) {
-            closeModal();
-        }
-    };
-
-    function getItemPrice(item) {
-        return parseFloat(item['Price (KWD)'] || item['Price (USD)'] || item['Price'] || 0);
-    }
-
-    // Show Active Suppliers Modal
-    function showActiveSuppliersModal() {
-        const suppliers = [...new Set(masterData.map(d => d.Supplier))].sort();
-        let listHtml = '<ol style="padding-left: 20px; line-height: 1.8;">';
-        suppliers.forEach(s => {
-            const count = masterData.filter(m => m.Supplier === s).length;
-            listHtml += `<li><strong>${s}</strong> - (${count} item(s))</li>`;
-        });
-        listHtml += '</ol>';
-        showModal(`Active Suppliers List (${suppliers.length})`, listHtml);
-    }
-
-    // Show Origins Modal
-    function showOriginsModal() {
-        const origins = [...new Set(masterData.map(d => d.Origin))].sort();
-        let listHtml = '<ul style="padding-left: 20px; line-height: 1.8;">';
-        origins.forEach(o => {
-            listHtml += `<li><strong>${o}</strong></li>`;
-        });
-        listHtml += '</ul>';
-        showModal(`Total Origins (${origins.length})`, listHtml);
-    }
-
-    // Show Items supplied by specific vendor
-    function showSupplierItemsModal(supplierName) {
-        const items = masterData.filter(m => m.Supplier === supplierName);
-        let tableHtml = `
-            <table style="width:100%; border-collapse:collapse; margin-top:10px;">
-                <thead>
-                    <tr style="text-align:left; border-bottom:2px solid #ccc; background-color: var(--bg-light);">
-                        <th style="padding:10px;">Code</th>
-                        <th style="padding:10px;">Item Name</th>
-                        <th style="padding:10px;">UOM</th>
-                        <th style="padding:10px;">Origin</th>
-                        <th style="padding:10px;">Price</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-        items.forEach(i => {
-            tableHtml += `
-                <tr style="border-bottom:1px solid #eee;">
-                    <td style="padding:10px;">${i['Item Code']}</td>
-                    <td style="padding:10px;"><strong>${i['Item Name']}</strong></td>
-                    <td style="padding:10px;">${i['UOM']}</td>
-                    <td style="padding:10px;"><span class="badge badge-green">${i['Origin']}</span></td>
-                    <td style="padding:10px;">${getItemPrice(i).toFixed(3)} KWD</td>
-                </tr>`;
-        });
-        tableHtml += `</tbody></table>`;
-        showModal(`Items Supplied by ${supplierName}`, tableHtml);
-    }
-
-    // Themes Setup
-    const themes = [
-        { name: "Default Ice", bodyBg: "#f4f7f6", cardBg: "#ffffff", textDark: "#333333", border: "#e0e0e0", primary: "#2c3e50", isDark: false },
-        { name: "Slate Dark", bodyBg: "#1e293b", cardBg: "#0f172a", textDark: "#f1f5f9", border: "#334155", primary: "#38bdf8", isDark: true },
-        { name: "Executive Navy", bodyBg: "#eef2f6", cardBg: "#ffffff", textDark: "#1e293b", border: "#cbd5e1", primary: "#1e3a8a", isDark: false },
-        { name: "Corporate Charcoal", bodyBg: "#18181b", cardBg: "#27272a", textDark: "#f4f4f5", border: "#3f3f46", primary: "#60a5fa", isDark: true },
-        { name: "Soft Tech", bodyBg: "#f0f4f8", cardBg: "#ffffff", textDark: "#102a43", border: "#bcccdc", primary: "#0b69a3", isDark: false }
-    ];
-
-    let currentThemeIndex = 0;
-
-    document.getElementById('appHeader').addEventListener('click', function() {
-        currentThemeIndex = (currentThemeIndex + 1) % themes.length;
-        const theme = themes[currentThemeIndex];
-        
-        const root = document.documentElement;
-        root.style.setProperty('--body-bg', theme.bodyBg);
-        root.style.setProperty('--card-bg', theme.cardBg);
-        root.style.setProperty('--text-dark', theme.textDark);
-        root.style.setProperty('--border-color', theme.border);
-        root.style.setProperty('--primary', theme.primary);
-
-        if (theme.isDark) {
-            document.body.classList.add('dark-theme');
-        } else {
-            document.body.classList.remove('dark-theme');
-        }
-    });
-
+    // Master Catalog Data
     let masterData = [
         {"Item Code":"FB001","Item Name":"Basmati Rice 5kg","UOM":"Bag","Origin":"India","Price (KWD)":5.250,"Supplier":"Global Foods Ltd"},
         {"Item Code":"FB002","Item Name":"Basmati Rice 5kg","UOM":"Bag","Origin":"Pakistan","Price (KWD)":4.850,"Supplier":"Asia Grain Supply"},
         {"Item Code":"FB003","Item Name":"Basmati Rice 5kg Premium","UOM":"Bag","Origin":"India","Price (KWD)":6.750,"Supplier":"Premium Harvest"},
         {"Item Code":"FB004","Item Name":"Jasmine Rice 5kg","UOM":"Bag","Origin":"Thailand","Price (KWD)":5.800,"Supplier":"Thai Food Supply"},
-        {"Item Code":"FB005","Item Name":"Jasmine Rice 5kg","UOM":"Bag","Origin":"Vietnam","Price (KWD)":5.300,"Supplier":"Mekong Foods"},
         {"Item Code":"FB006","Item Name":"Wheat Flour","UOM":"Kg","Origin":"Australia","Price (KWD)":0.520,"Supplier":"Grain World"},
         {"Item Code":"FB007","Item Name":"Wheat Flour","UOM":"Kg","Origin":"India","Price (KWD)":0.410,"Supplier":"Sunrise Trading"},
         {"Item Code":"FB008","Item Name":"White Sugar","UOM":"Kg","Origin":"Brazil","Price (KWD)":0.360,"Supplier":"Sweet Harvest Co"},
-        {"Item Code":"FB009","Item Name":"White Sugar","UOM":"Kg","Origin":"Thailand","Price (KWD)":0.320,"Supplier":"Golden Sweet Ltd"},
-        {"Item Code":"FB010","Item Name":"Sea Salt","UOM":"Kg","Origin":"Australia","Price (KWD)":0.250,"Supplier":"Ocean Foods"},
-        {"Item Code":"FB011","Item Name":"Black Pepper Whole","UOM":"Kg","Origin":"Vietnam","Price (KWD)":3.600,"Supplier":"Spice Masters"},
-        {"Item Code":"FB012","Item Name":"Black Pepper Whole","UOM":"Kg","Origin":"India","Price (KWD)":4.100,"Supplier":"Royal Spices"},
         {"Item Code":"FB013","Item Name":"Olive Oil Extra Virgin","UOM":"Litre","Origin":"Spain","Price (KWD)":3.000,"Supplier":"Mediterranean Imports"},
         {"Item Code":"FB014","Item Name":"Olive Oil Extra Virgin","UOM":"Litre","Origin":"Italy","Price (KWD)":3.900,"Supplier":"Italian Pantry"},
-        {"Item Code":"FB015","Item Name":"Sunflower Oil","UOM":"Litre","Origin":"Ukraine","Price (KWD)":0.970,"Supplier":"Golden Oil Trading"},
-        {"Item Code":"FB016","Item Name":"Sunflower Oil","UOM":"Litre","Origin":"Turkey","Price (KWD)":1.150,"Supplier":"Anatolia Foods"},
-        {"Item Code":"FB017","Item Name":"Soy Sauce","UOM":"Bottle","Origin":"Japan","Price (KWD)":1.250,"Supplier":"Sakura Foods"},
-        {"Item Code":"FB018","Item Name":"Soy Sauce","UOM":"Bottle","Origin":"China","Price (KWD)":0.880,"Supplier":"East Asia Foods"},
-        {"Item Code":"FB019","Item Name":"Tomato Ketchup","UOM":"Bottle","Origin":"USA","Price (KWD)":0.950,"Supplier":"Fresh Choice Supply"},
-        {"Item Code":"FB020","Item Name":"Tomato Ketchup","UOM":"Bottle","Origin":"Malaysia","Price (KWD)":0.750,"Supplier":"Kitchen Essentials"},
-        {"Item Code":"FB021","Item Name":"Mayonnaise","UOM":"Jar","Origin":"Netherlands","Price (KWD)":1.550,"Supplier":"Dutch Foods BV"},
-        {"Item Code":"FB022","Item Name":"Mayonnaise","UOM":"Jar","Origin":"USA","Price (KWD)":1.350,"Supplier":"Fresh Choice Supply"},
-        {"Item Code":"FB023","Item Name":"Canned Tuna","UOM":"Can","Origin":"Philippines","Price (KWD)":0.700,"Supplier":"Ocean Catch Ltd"},
-        {"Item Code":"FB024","Item Name":"Canned Tuna","UOM":"Can","Origin":"Thailand","Price (KWD)":0.600,"Supplier":"Thai Food Supply"},
-        {"Item Code":"FB025","Item Name":"Coconut Milk","UOM":"Can","Origin":"Thailand","Price (KWD)":0.800,"Supplier":"Tropical Harvest"},
-        {"Item Code":"FB026","Item Name":"Coconut Milk","UOM":"Can","Origin":"Indonesia","Price (KWD)":0.670,"Supplier":"Island Foods"},
-        {"Item Code":"FB027","Item Name":"Fresh Milk","UOM":"Litre","Origin":"New Zealand","Price (KWD)":0.730,"Supplier":"Dairy Fresh Ltd"},
-        {"Item Code":"FB028","Item Name":"Fresh Milk","UOM":"Litre","Origin":"Australia","Price (KWD)":0.640,"Supplier":"Southern Dairy"},
-        {"Item Code":"FB029","Item Name":"Cheddar Cheese","UOM":"Kg","Origin":"New Zealand","Price (KWD)":3.350,"Supplier":"Dairy Fresh Ltd"},
-        {"Item Code":"FB030","Item Name":"Cheddar Cheese Premium","UOM":"Kg","Origin":"England","Price (KWD)":4.800,"Supplier":"English Dairy Co"},
-        {"Item Code":"FB031","Item Name":"Butter Unsalted","UOM":"Kg","Origin":"Denmark","Price (KWD)":2.650,"Supplier":"Nordic Dairy"},
-        {"Item Code":"FB032","Item Name":"Eggs Grade A","UOM":"Dozen","Origin":"Malaysia","Price (KWD)":1.120,"Supplier":"Farm Fresh Produce"},
         {"Item Code":"FB033","Item Name":"Chicken Breast","UOM":"Kg","Origin":"Brazil","Price (KWD)":2.050,"Supplier":"Prime Poultry"},
-        {"Item Code":"FB034","Item Name":"Chicken Breast","UOM":"Kg","Origin":"USA","Price (KWD)":2.700,"Supplier":"American Meats"},
-        {"Item Code":"FB035","Item Name":"Beef Striploin","UOM":"Kg","Origin":"Australia","Price (KWD)":7.550,"Supplier":"Aussie Meat Export"},
-        {"Item Code":"FB036","Item Name":"Beef Striploin Wagyu","UOM":"Kg","Origin":"Japan","Price (KWD)":23.900,"Supplier":"Kobe Premium Foods"},
-        {"Item Code":"FB037","Item Name":"Salmon Fillet","UOM":"Kg","Origin":"Norway","Price (KWD)":6.650,"Supplier":"Nordic Seafood"},
-        {"Item Code":"FB038","Item Name":"Salmon Fillet","UOM":"Kg","Origin":"Chile","Price (KWD)":5.450,"Supplier":"Pacific Seafood"},
-        {"Item Code":"FB039","Item Name":"Shrimp Medium","UOM":"Kg","Origin":"Vietnam","Price (KWD)":4.300,"Supplier":"Ocean Catch Ltd"},
-        {"Item Code":"FB040","Item Name":"Shrimp Medium","UOM":"Kg","Origin":"India","Price (KWD)":3.900,"Supplier":"Blue Ocean Exports"},
-        {"Item Code":"FB041","Item Name":"Potatoes","UOM":"Kg","Origin":"Netherlands","Price (KWD)":0.440,"Supplier":"Dutch Agro Supply"},
-        {"Item Code":"FB042","Item Name":"Potatoes","UOM":"Kg","Origin":"India","Price (KWD)":0.290,"Supplier":"Fresh Harvest Traders"},
-        {"Item Code":"FB043","Item Name":"Tomatoes","UOM":"Kg","Origin":"Spain","Price (KWD)":0.730,"Supplier":"Iberia Produce"},
-        {"Item Code":"FB044","Item Name":"Tomatoes","UOM":"Kg","Origin":"Turkey","Price (KWD)":0.560,"Supplier":"Anatolia Foods"},
-        {"Item Code":"FB045","Item Name":"Apples Gala","UOM":"Kg","Origin":"USA","Price (KWD)":1.030,"Supplier":"Orchard Fruits Inc"},
-        {"Item Code":"FB046","Item Name":"Apples Gala","UOM":"Kg","Origin":"New Zealand","Price (KWD)":1.280,"Supplier":"Kiwi Fruit Export"},
-        {"Item Code":"FB047","Item Name":"Coffee Beans Arabica","UOM":"Kg","Origin":"Colombia","Price (KWD)":4.700,"Supplier":"Coffee Traders Intl"},
-        {"Item Code":"FB048","Item Name":"Coffee Beans Arabica Premium","UOM":"Kg","Origin":"Ethiopia","Price (KWD)":6.950,"Supplier":"Ethiopian Coffee Co"},
-        {"Item Code":"FB049","Item Name":"Mineral Water 500ml","UOM":"Bottle","Origin":"France","Price (KWD)":0.260,"Supplier":"Pure Spring Co"},
-        {"Item Code":"FB050","Item Name":"Mineral Water 500ml","UOM":"Bottle","Origin":"Local","Price (KWD)":0.110,"Supplier":"City Beverage Supply"}
+        {"Item Code":"FB034","Item Name":"Chicken Breast","UOM":"Kg","Origin":"USA","Price (KWD)":2.700,"Supplier":"American Meats"}
     ];
 
-    let currentFilteredItems = [];
-    let processedRequestData = [];
+    // Orders Database State
+    let ordersList = [
+        { id: 101, itemName: "Basmati Rice 5kg", origin: "Pakistan", uom: "Bag", requestQty: 20, receivedQty: 0, status: "Pending" },
+        { id: 102, itemName: "Wheat Flour", origin: "India", uom: "Kg", requestQty: 50, receivedQty: 50, status: "Received" }
+    ];
+
     let countChartInstance = null;
     let priceChartInstance = null;
 
-    document.addEventListener("DOMContentLoaded", () => {
-        initDashboard(masterData);
-    });
-
-    function initDashboard(data) {
-        masterData = data;
+    function initDashboard() {
         updateKPIs();
-        populateFilterDropdowns();
-        renderSupplierAnalysis();
-        filterItems();
-        setupEventListeners();
+        populateDatalist();
+        populateFilters();
+        renderSupplierTable();
+        renderItemsTable(masterData);
+        renderOrdersTable();
+        renderRequestTable();
+        renderCharts();
     }
 
-    function switchTab(tabId, btn) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    function switchTab(tabId, navElement) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
         document.getElementById(tabId).classList.add('active');
-        btn.classList.add('active');
+        if (navElement) navElement.classList.add('active');
+
+        const titleMap = {
+            'dashboard-tab': 'Executive Dashboard',
+            'order-tracker-tab': 'Store Order Tracker & Receiving Portal',
+            'supplier-tab': 'Supplier Analysis',
+            'items-tab': 'Item & Price Comparison',
+            'request-tab': 'Store Request Quote Analysis'
+        };
+        document.getElementById('pageTitle').innerText = titleMap[tabId] || 'Dashboard';
+    }
+
+    function getItemPrice(item) {
+        return parseFloat(item['Price (KWD)'] || item['Price'] || 0);
     }
 
     function updateKPIs() {
         document.getElementById('kpiTotalItems').innerText = masterData.length;
-        
-        const suppliers = [...new Set(masterData.map(d => d.Supplier))];
-        document.getElementById('kpiTotalSuppliers').innerText = suppliers.length;
-
-        const totalPrices = masterData.reduce((acc, curr) => acc + getItemPrice(curr), 0);
-        const avg = masterData.length ? (totalPrices / masterData.length) : 0;
-        document.getElementById('kpiAvgPrice').innerText = avg.toFixed(3) + ' KWD';
-
-        const origins = [...new Set(masterData.map(d => d.Origin))];
-        document.getElementById('kpiTotalOrigins').innerText = origins.length;
+        document.getElementById('kpiTotalSuppliers').innerText = new Set(masterData.map(d => d.Supplier)).size;
+        document.getElementById('kpiPendingOrders').innerText = ordersList.filter(o => o.status === 'Pending').length;
+        document.getElementById('kpiTotalOrigins').innerText = new Set(masterData.map(d => d.Origin)).size;
     }
 
-    function populateFilterDropdowns() {
+    /* Auto-complete Suggestions for Order Page */
+    function populateDatalist() {
+        const datalist = document.getElementById('masterItemsList');
+        datalist.innerHTML = '';
+        const uniqueNames = [...new Set(masterData.map(d => d['Item Name']))];
+        uniqueNames.forEach(name => {
+            datalist.innerHTML += `<option value="${name}">`;
+        });
+    }
+
+    function autoFillItemDetails() {
+        const selectedName = document.getElementById('orderItemInput').value;
+        const found = masterData.find(d => d['Item Name'] === selectedName);
+        if (found) {
+            document.getElementById('orderOriginInput').value = found.Origin || '';
+            document.getElementById('orderUomInput').value = found.UOM || '';
+        }
+    }
+
+    /* Create New Single Order */
+    function submitSingleOrder() {
+        const name = document.getElementById('orderItemInput').value.trim();
+        const origin = document.getElementById('orderOriginInput').value.trim();
+        const uom = document.getElementById('orderUomInput').value.trim();
+        const qty = parseInt(document.getElementById('orderQtyInput').value);
+
+        if (!name || !qty) {
+            alert('Please specify Item Name and Quantity.');
+            return;
+        }
+
+        const newOrder = {
+            id: Math.floor(100 + Math.random() * 900),
+            itemName: name,
+            origin: origin || 'N/A',
+            uom: uom || 'Unit',
+            requestQty: qty,
+            receivedQty: 0,
+            status: 'Pending'
+        };
+
+        ordersList.push(newOrder);
+        renderOrdersTable();
+        updateKPIs();
+        renderRequestTable();
+
+        showNotification('🚀 New Order Submitted', `Item: ${name} (${qty} ${uom}) placed by Store.`);
+
+        // Reset Inputs
+        document.getElementById('orderItemInput').value = '';
+        document.getElementById('orderOriginInput').value = '';
+        document.getElementById('orderUomInput').value = '';
+        document.getElementById('orderQtyInput').value = '';
+    }
+
+    /* Render Order Tracker Table & Receive Action */
+    function renderOrdersTable() {
+        const tbody = document.getElementById('ordersTableBody');
+        tbody.innerHTML = '';
+
+        ordersList.forEach(order => {
+            const statusBadge = order.status === 'Received' ? 
+                `<span class="badge badge-green">Received</span>` : 
+                `<span class="badge badge-orange">Pending</span>`;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>#${order.id}</td>
+                    <td><strong>${order.itemName}</strong></td>
+                    <td>${order.origin}</td>
+                    <td>${order.uom}</td>
+                    <td>${order.requestQty}</td>
+                    <td>${order.receivedQty}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        ${order.status === 'Pending' ? `
+                            <div style="display:flex; gap:5px;">
+                                <input type="number" id="rec_${order.id}" placeholder="Qty" style="width:70px; padding:4px;" min="1" max="${order.requestQty}">
+                                <button class="btn btn-green" style="padding:4px 8px; font-size:12px;" onclick="receiveOrder(${order.id})">Receive</button>
+                            </div>
+                        ` : '<span style="color:#2ecc71; font-weight:bold;">✔ Complete</span>'}
+                    </td>
+                </tr>`;
+        });
+    }
+
+    function receiveOrder(orderId) {
+        const input = document.getElementById(`rec_${orderId}`);
+        const qty = parseInt(input.value);
+
+        const order = ordersList.find(o => o.id === orderId);
+        if (order && qty > 0) {
+            order.receivedQty = qty;
+            order.status = 'Received';
+            renderOrdersTable();
+            updateKPIs();
+
+            showNotification('📥 Items Received in Store', `Store confirmed receipt of ${qty} ${order.uom} of ${order.itemName}.`);
+        } else {
+            alert('Please enter a valid quantity.');
+        }
+    }
+
+    /* Toast Popups for Realtime Updates */
+    function showNotification(title, message) {
+        const container = document.getElementById('notificationContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast-popup';
+        toast.innerHTML = `
+            <div style="font-weight:bold; color:var(--primary); font-size:14px;">${title}</div>
+            <div style="font-size:13px; color:#555; margin-top:3px;">${message}</div>
+        `;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.remove();
+        }, 6000);
+    }
+
+    /* Bulk File Reader for Orders */
+    document.getElementById('bulkOrderFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+            jsonData.forEach(row => {
+                const name = row['Item Name'] || row['Item'] || row['Name'];
+                const qty = parseInt(row['Quantity'] || row['Qty'] || 1);
+                const origin = row['Origin'] || 'N/A';
+                const uom = row['UOM'] || 'Unit';
+
+                if (name && qty) {
+                    ordersList.push({
+                        id: Math.floor(100 + Math.random() * 900),
+                        itemName: name,
+                        origin: origin,
+                        uom: uom,
+                        requestQty: qty,
+                        receivedQty: 0,
+                        status: 'Pending'
+                    });
+                }
+            });
+
+            renderOrdersTable();
+            updateKPIs();
+            renderRequestTable();
+            showNotification('📥 Bulk Orders Processed', `Successfully imported orders from Excel.`);
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    /* Find Cheapest Supplier Engine */
+    function computeCheapestQuotes() {
+        return ordersList.map(order => {
+            const matches = masterData.filter(m => m['Item Name'].toLowerCase() === order.itemName.toLowerCase());
+
+            if (matches.length > 0) {
+                // Find lowest price
+                const sorted = matches.sort((a,b) => getItemPrice(a) - getItemPrice(b));
+                const cheapest = sorted[0];
+                const unitPrice = getItemPrice(cheapest);
+                return {
+                    itemName: order.itemName,
+                    origin: order.origin !== 'N/A' ? order.origin : cheapest.Origin,
+                    requestQty: order.requestQty,
+                    uom: order.uom !== 'Unit' ? order.uom : cheapest.UOM,
+                    cheapSupplier: cheapest.Supplier,
+                    unitPrice: unitPrice,
+                    totalPrice: unitPrice * order.requestQty
+                };
+            } else {
+                return {
+                    itemName: order.itemName,
+                    origin: order.origin,
+                    requestQty: order.requestQty,
+                    uom: order.uom,
+                    cheapSupplier: 'No Supplier Found',
+                    unitPrice: 0,
+                    totalPrice: 0
+                };
+            }
+        });
+    }
+
+    function renderRequestTable() {
+        const quotes = computeCheapestQuotes();
+        const tbody = document.getElementById('requestTableBody');
+        tbody.innerHTML = '';
+
+        quotes.forEach(q => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${q.itemName}</strong></td>
+                    <td>${q.origin}</td>
+                    <td>${q.requestQty}</td>
+                    <td>${q.uom}</td>
+                    <td><span class="badge badge-green">${q.cheapSupplier}</span></td>
+                    <td>${q.unitPrice.toFixed(3)}</td>
+                    <td><strong>${q.totalPrice.toFixed(3)}</strong></td>
+                </tr>`;
+        });
+    }
+
+    /* Export Cheapest Quotes Sheet for Purchase Team */
+    function exportCheapestOrdersExcel() {
+        const quotes = computeCheapestQuotes();
+        if (quotes.length === 0) {
+            alert('No orders available to export.');
+            return;
+        }
+
+        const exportData = quotes.map(q => ({
+            "Item Name": q.itemName,
+            "Origin": q.origin,
+            "Request Qty": q.requestQty,
+            "UOM": q.uom,
+            "Cheap Supplier": q.cheapSupplier,
+            "Unit Price (KWD)": q.unitPrice.toFixed(3),
+            "Total Price (KWD)": q.totalPrice.toFixed(3)
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Purchase Orders");
+        XLSX.writeFile(workbook, "Purchase_Cheapest_Supplier_Orders.xlsx");
+    }
+
+    function populateFilters() {
         const supplierSelect = document.getElementById('supplierFilter');
         const originSelect = document.getElementById('originFilter');
 
-        supplierSelect.innerHTML = '<option value="">All Suppliers</option>';
-        originSelect.innerHTML = '<option value="">All Origins</option>';
-
         const suppliers = [...new Set(masterData.map(d => d.Supplier))].sort();
-        suppliers.forEach(s => {
-            if(s) supplierSelect.innerHTML += `<option value="${s}">${s}</option>`;
-        });
-
         const origins = [...new Set(masterData.map(d => d.Origin))].sort();
-        origins.forEach(o => {
-            if(o) originSelect.innerHTML += `<option value="${o}">${o}</option>`;
-        });
+
+        supplierSelect.innerHTML = '<option value="">All Suppliers</option>';
+        suppliers.forEach(s => supplierSelect.innerHTML += `<option value="${s}">${s}</option>`);
+
+        originSelect.innerHTML = '<option value="">All Origins</option>';
+        origins.forEach(o => originSelect.innerHTML += `<option value="${o}">${o}</option>`);
     }
 
-    function renderSupplierAnalysis() {
-        const stats = {};
-        masterData.forEach(item => {
-            const supp = item.Supplier || 'Unknown';
-            const price = getItemPrice(item);
-            if (!stats[supp]) {
-                stats[supp] = { count: 0, totalPrice: 0, minPrice: price, maxPrice: price, origins: new Set() };
-            }
-            stats[supp].count += 1;
-            stats[supp].totalPrice += price;
-            if (price < stats[supp].minPrice) stats[supp].minPrice = price;
-            if (price > stats[supp].maxPrice) stats[supp].maxPrice = price;
-            if (item.Origin) stats[supp].origins.add(item.Origin);
-        });
-
-        const labels = Object.keys(stats);
-        const counts = labels.map(l => stats[l].count);
-        const avgPrices = labels.map(l => (stats[l].totalPrice / stats[l].count).toFixed(3));
-
-        // Update Charts
-        if (countChartInstance) countChartInstance.destroy();
-        if (priceChartInstance) priceChartInstance.destroy();
-
-        const ctxCount = document.getElementById('supplierCountChart').getContext('2d');
-        countChartInstance = new Chart(ctxCount, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{ label: 'Items Offered', data: counts, backgroundColor: '#3498db' }]
-            },
-            options: { responsive: true, plugins: { legend: { display: false } } }
-        });
-
-        const ctxPrice = document.getElementById('supplierPriceChart').getContext('2d');
-        priceChartInstance = new Chart(ctxPrice, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{ label: 'Avg Price (KWD)', data: avgPrices, backgroundColor: '#f39c12' }]
-            },
-            options: { responsive: true, plugins: { legend: { display: false } } }
-        });
-
-        // Populate Supplier Table
+    function renderSupplierTable() {
         const tbody = document.getElementById('supplierTableBody');
         tbody.innerHTML = '';
-        labels.forEach(supp => {
-            const s = stats[supp];
-            const avg = (s.totalPrice / s.count).toFixed(3);
-            const originsArr = Array.from(s.origins).join(', ');
+        const supplierMap = {};
+
+        masterData.forEach(item => {
+            const supp = item.Supplier;
+            const price = getItemPrice(item);
+            if (!supplierMap[supp]) {
+                supplierMap[supp] = { count: 0, totalPrice: 0, minPrice: price, maxPrice: price, origins: new Set() };
+            }
+            supplierMap[supp].count++;
+            supplierMap[supp].totalPrice += price;
+            if (price < supplierMap[supp].minPrice) supplierMap[supp].minPrice = price;
+            if (price > supplierMap[supp].maxPrice) supplierMap[supp].maxPrice = price;
+            if (item.Origin) supplierMap[supp].origins.add(item.Origin);
+        });
+
+        for (const [supp, info] of Object.entries(supplierMap)) {
             tbody.innerHTML += `
                 <tr>
                     <td><strong>${supp}</strong></td>
-                    <td>
-                        <span class="badge badge-blue badge-interactive" onclick="showSupplierItemsModal('${supp}')">
-                            ${s.count} Items
-                        </span>
-                    </td>
-                    <td>${avg} KWD</td>
-                    <td>${s.minPrice.toFixed(3)} KWD</td>
-                    <td>${s.maxPrice.toFixed(3)} KWD</td>
-                    <td><span class="badge badge-green">${originsArr || 'N/A'}</span></td>
-                </tr>
-            `;
-        });
+                    <td><span class="badge badge-blue">${info.count} items</span></td>
+                    <td>${(info.totalPrice / info.count).toFixed(3)}</td>
+                    <td>${info.minPrice.toFixed(3)}</td>
+                    <td>${info.maxPrice.toFixed(3)}</td>
+                    <td><span class="badge badge-green">${Array.from(info.origins).join(', ')}</span></td>
+                </tr>`;
+        }
     }
 
     function filterItems() {
-        const query = document.getElementById('searchInput').value.toLowerCase();
-        const supplier = document.getElementById('supplierFilter').value;
-        const origin = document.getElementById('originFilter').value;
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const supp = document.getElementById('supplierFilter').value;
+        const orig = document.getElementById('originFilter').value;
         const sort = document.getElementById('sortFilter').value;
 
-        currentFilteredItems = masterData.filter(item => {
-            const matchesQuery = !query || 
-                (item['Item Name'] && item['Item Name'].toLowerCase().includes(query)) ||
-                (item['Item Code'] && item['Item Code'].toLowerCase().includes(query)) ||
-                (item['Supplier'] && item['Supplier'].toLowerCase().includes(query));
-            const matchesSupplier = !supplier || item.Supplier === supplier;
-            const matchesOrigin = !origin || item.Origin === origin;
-            return matchesQuery && matchesSupplier && matchesOrigin;
+        let filtered = masterData.filter(item => {
+            const matchesSearch = (item['Item Name'] || '').toLowerCase().includes(search) ||
+                                  (item['Item Code'] || '').toLowerCase().includes(search) ||
+                                  (item['Supplier'] || '').toLowerCase().includes(search);
+            const matchesSupp = !supp || item.Supplier === supp;
+            const matchesOrig = !orig || item.Origin === orig;
+            return matchesSearch && matchesSupp && matchesOrig;
         });
 
-        currentFilteredItems.sort((a, b) => {
-            const priceA = getItemPrice(a);
-            const priceB = getItemPrice(b);
-            if (sort === 'price-asc') return priceA - priceB;
-            if (sort === 'price-desc') return priceB - priceA;
-            if (sort === 'name-asc') return (a['Item Name'] || '').localeCompare(b['Item Name'] || '');
-            return 0;
+        filtered.sort((a, b) => {
+            const pA = getItemPrice(a);
+            const pB = getItemPrice(b);
+            return sort === 'price-asc' ? pA - pB : pB - pA;
         });
 
-        renderItemsTable(currentFilteredItems);
+        renderItemsTable(filtered);
     }
 
     function renderItemsTable(items) {
         const tbody = document.getElementById('itemsTableBody');
         tbody.innerHTML = '';
-
-        if (items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">No matching items found.</td></tr>';
-            return;
-        }
-
         items.forEach(item => {
             tbody.innerHTML += `
                 <tr>
                     <td>${item['Item Code'] || '-'}</td>
-                    <td><strong>${item['Item Name'] || '-'}</strong></td>
+                    <td><strong>${item['Item Name']}</strong></td>
                     <td>${item['UOM'] || '-'}</td>
                     <td><span class="badge badge-green">${item['Origin'] || '-'}</span></td>
-                    <td><strong>${getItemPrice(item).toFixed(3)} KWD</strong></td>
+                    <td>${getItemPrice(item).toFixed(3)}</td>
                     <td>${item['Supplier'] || '-'}</td>
-                </tr>
-            `;
+                </tr>`;
         });
     }
 
-    function setupEventListeners() {
-        // Master Excel Upload
-        document.getElementById('excelFile').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.SheetNames[0];
-                const parsedData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
-                if (parsedData.length) {
-                    initDashboard(parsedData);
-                    alert("Master Data Updated Successfully!");
-                }
-            };
-            reader.readAsArrayBuffer(file);
+    function renderCharts() {
+        const supplierMap = {};
+        masterData.forEach(item => {
+            const supp = item.Supplier;
+            const price = getItemPrice(item);
+            if (!supplierMap[supp]) supplierMap[supp] = { count: 0, totalPrice: 0 };
+            supplierMap[supp].count++;
+            supplierMap[supp].totalPrice += price;
         });
 
-        // Store Request Upload
-        document.getElementById('requestFile').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.SheetNames[0];
-                const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
-                processStoreRequest(rawData);
-            };
-            reader.readAsArrayBuffer(file);
+        const labels = Object.keys(supplierMap);
+        const counts = labels.map(l => supplierMap[l].count);
+        const avgPrices = labels.map(l => (supplierMap[l].totalPrice / supplierMap[l].count).toFixed(3));
+
+        if (countChartInstance) countChartInstance.destroy();
+        if (priceChartInstance) priceChartInstance.destroy();
+
+        const ctx1 = document.getElementById('supplierCountChart').getContext('2d');
+        countChartInstance = new Chart(ctx1, {
+            type: 'bar',
+            data: { labels: labels, datasets: [{ label: 'Item Count', data: counts, backgroundColor: '#3498db' }] }
+        });
+
+        const ctx2 = document.getElementById('supplierPriceChart').getContext('2d');
+        priceChartInstance = new Chart(ctx2, {
+            type: 'bar',
+            data: { labels: labels, datasets: [{ label: 'Avg Price (KWD)', data: avgPrices, backgroundColor: '#2ecc71' }] }
         });
     }
 
-    function processStoreRequest(requestData) {
-        processedRequestData = [];
-        const tbody = document.getElementById('requestTableBody');
-        tbody.innerHTML = '';
-
-        requestData.forEach(row => {
-            const reqName = row['Item Name'] || row['Item'] || row['Description'] || '';
-            const qty = parseFloat(row['Quantity'] || row['Qty'] || 1);
-
-            if (!reqName) return;
-
-            // Find matching items in master dataset
-            const matches = masterData.filter(m => 
-                m['Item Name'] && m['Item Name'].toLowerCase().trim() === reqName.toLowerCase().trim()
-            );
-
-            if (matches.length > 0) {
-                // Pick cheapest match
-                matches.sort((a, b) => getItemPrice(a) - getItemPrice(b));
-                const cheapest = matches[0];
-                const unitPrice = getItemPrice(cheapest);
-                const totalPrice = unitPrice * qty;
-
-                processedRequestData.push({
-                    'Item Name': reqName,
-                    'Qty': qty,
-                    'UOM': cheapest['UOM'] || 'Unit',
-                    'Supplier': cheapest['Supplier'],
-                    'Unit Price (KWD)': unitPrice,
-                    'Total Price (KWD)': totalPrice,
-                    'Status': 'Match Found'
-                });
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${reqName}</strong></td>
-                        <td>${qty}</td>
-                        <td>${cheapest['UOM'] || '-'}</td>
-                        <td><span class="badge badge-blue">${cheapest['Supplier']}</span></td>
-                        <td>${unitPrice.toFixed(3)} KWD</td>
-                        <td><strong>${totalPrice.toFixed(3)} KWD</strong></td>
-                        <td><span class="badge badge-green">Match Found</span></td>
-                    </tr>
-                `;
-            } else {
-                processedRequestData.push({
-                    'Item Name': reqName,
-                    'Qty': qty,
-                    'UOM': 'N/A',
-                    'Supplier': 'N/A',
-                    'Unit Price (KWD)': 0,
-                    'Total Price (KWD)': 0,
-                    'Status': 'Not Found'
-                });
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${reqName}</strong></td>
-                        <td>${qty}</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td><span class="badge badge-red">Not Found</span></td>
-                    </tr>
-                `;
-            }
-        });
-
-        if (processedRequestData.length > 0) {
-            document.getElementById('exportBtn').style.display = 'inline-block';
-        }
-    }
-
-    function exportItemsToExcel() {
-        const worksheet = XLSX.utils.json_to_sheet(currentFilteredItems);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Filtered Items");
-        XLSX.writeFile(workbook, "Light_Fields_Master_Items.xlsx");
-    }
-
-    function exportCheapestQuote() {
-        if (!processedRequestData.length) return;
-        const worksheet = XLSX.utils.json_to_sheet(processedRequestData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Cheapest Quote");
-        XLSX.writeFile(workbook, "Cheapest_Supplier_Quote.xlsx");
-    }
+    function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
 </script>
 </body>
 </html>
