@@ -813,98 +813,74 @@
         initDashboard(masterData);
     });
 
-    function switchTab(tabId, btn) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        if (btn) btn.classList.add('active');
-    }
-
     function initDashboard(data) {
         masterData = data;
-        renderKPIs();
-        renderDropdowns();
+        updateKPIs();
+        populateFilterDropdowns();
         renderSupplierAnalysis();
-        filterItems(); // Renders with default price low-to-high sorting
+        filterItems();
+        setupEventListeners();
     }
 
-    function renderKPIs() {
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function updateKPIs() {
         document.getElementById('kpiTotalItems').innerText = masterData.length;
+        
         const suppliers = [...new Set(masterData.map(d => d.Supplier))];
         document.getElementById('kpiTotalSuppliers').innerText = suppliers.length;
 
-        const sumPrice = masterData.reduce((acc, curr) => acc + getItemPrice(curr), 0);
-        const avg = masterData.length ? (sumPrice / masterData.length).toFixed(3) : "0.000";
-        document.getElementById('kpiAvgPrice').innerText = avg + ' KWD';
+        const totalPrices = masterData.reduce((acc, curr) => acc + getItemPrice(curr), 0);
+        const avg = masterData.length ? (totalPrices / masterData.length) : 0;
+        document.getElementById('kpiAvgPrice').innerText = avg.toFixed(3) + ' KWD';
 
         const origins = [...new Set(masterData.map(d => d.Origin))];
         document.getElementById('kpiTotalOrigins').innerText = origins.length;
     }
 
-    function renderDropdowns() {
-        const suppliers = [...new Set(masterData.map(d => d.Supplier))].sort();
+    function populateFilterDropdowns() {
         const supplierSelect = document.getElementById('supplierFilter');
+        const originSelect = document.getElementById('originFilter');
+
         supplierSelect.innerHTML = '<option value="">All Suppliers</option>';
+        originSelect.innerHTML = '<option value="">All Origins</option>';
+
+        const suppliers = [...new Set(masterData.map(d => d.Supplier))].sort();
         suppliers.forEach(s => {
-            supplierSelect.innerHTML += `<option value="${s}">${s}</option>`;
+            if(s) supplierSelect.innerHTML += `<option value="${s}">${s}</option>`;
         });
 
         const origins = [...new Set(masterData.map(d => d.Origin))].sort();
-        const originSelect = document.getElementById('originFilter');
-        originSelect.innerHTML = '<option value="">All Origins</option>';
         origins.forEach(o => {
-            originSelect.innerHTML += `<option value="${o}">${o}</option>`;
+            if(o) originSelect.innerHTML += `<option value="${o}">${o}</option>`;
         });
     }
 
     function renderSupplierAnalysis() {
-        const supplierStats = {};
+        const stats = {};
         masterData.forEach(item => {
-            const s = item.Supplier;
+            const supp = item.Supplier || 'Unknown';
             const price = getItemPrice(item);
-            if (!supplierStats[s]) {
-                supplierStats[s] = { count: 0, totalPrice: 0, prices: [], origins: new Set() };
+            if (!stats[supp]) {
+                stats[supp] = { count: 0, totalPrice: 0, minPrice: price, maxPrice: price, origins: new Set() };
             }
-            supplierStats[s].count++;
-            supplierStats[s].totalPrice += price;
-            supplierStats[s].prices.push(price);
-            if (item.Origin) supplierStats[s].origins.add(item.Origin);
+            stats[supp].count += 1;
+            stats[supp].totalPrice += price;
+            if (price < stats[supp].minPrice) stats[supp].minPrice = price;
+            if (price > stats[supp].maxPrice) stats[supp].maxPrice = price;
+            if (item.Origin) stats[supp].origins.add(item.Origin);
         });
 
-        const labels = Object.keys(supplierStats);
-        const counts = labels.map(l => supplierStats[l].count);
-        const avgPrices = labels.map(l => (supplierStats[l].totalPrice / supplierStats[l].count).toFixed(3));
+        const labels = Object.keys(stats);
+        const counts = labels.map(l => stats[l].count);
+        const avgPrices = labels.map(l => (stats[l].totalPrice / stats[l].count).toFixed(3));
 
-        // Render Table
-        const tbody = document.getElementById('supplierTableBody');
-        tbody.innerHTML = '';
-        labels.forEach(s => {
-            const stat = supplierStats[s];
-            const avg = (stat.totalPrice / stat.count).toFixed(3);
-            const min = Math.min(...stat.prices).toFixed(3);
-            const max = Math.max(...stat.prices).toFixed(3);
-            const primaryOrigins = Array.from(stat.origins).slice(0, 3).join(', ');
-
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>${s}</strong></td>
-                    <td>
-                        <span class="badge badge-blue badge-interactive" onclick="showSupplierItemsModal('${s}')">
-                            ${stat.count} Items 🔍
-                        </span>
-                    </td>
-                    <td>${avg} KWD</td>
-                    <td>${min} KWD</td>
-                    <td>${max} KWD</td>
-                    <td><span class="badge badge-green">${primaryOrigins}</span></td>
-                </tr>`;
-        });
-
-        // Charts
-        renderCharts(labels, counts, avgPrices);
-    }
-
-    function renderCharts(labels, counts, avgPrices) {
+        // Update Charts
         if (countChartInstance) countChartInstance.destroy();
         if (priceChartInstance) priceChartInstance.destroy();
 
@@ -913,133 +889,130 @@
             type: 'bar',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Items Offered',
-                    data: counts,
-                    backgroundColor: '#3498db'
-                }]
+                datasets: [{ label: 'Items Offered', data: counts, backgroundColor: '#3498db' }]
             },
             options: { responsive: true, plugins: { legend: { display: false } } }
         });
 
         const ctxPrice = document.getElementById('supplierPriceChart').getContext('2d');
         priceChartInstance = new Chart(ctxPrice, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Avg Price (KWD)',
-                    data: avgPrices,
-                    borderColor: '#2ecc71',
-                    backgroundColor: 'rgba(46, 204, 113, 0.2)',
-                    fill: true
-                }]
+                datasets: [{ label: 'Avg Price (KWD)', data: avgPrices, backgroundColor: '#f39c12' }]
             },
             options: { responsive: true, plugins: { legend: { display: false } } }
         });
-    }
 
-    function renderItemsTable(data) {
-        const tbody = document.getElementById('itemsTableBody');
+        // Populate Supplier Table
+        const tbody = document.getElementById('supplierTableBody');
         tbody.innerHTML = '';
-        data.forEach(item => {
+        labels.forEach(supp => {
+            const s = stats[supp];
+            const avg = (s.totalPrice / s.count).toFixed(3);
+            const originsArr = Array.from(s.origins).join(', ');
             tbody.innerHTML += `
                 <tr>
-                    <td>${item['Item Code'] || '-'}</td>
-                    <td><strong>${item['Item Name']}</strong></td>
-                    <td>${item['UOM'] || '-'}</td>
-                    <td><span class="badge badge-green">${item['Origin'] || '-'}</span></td>
-                    <td>${getItemPrice(item).toFixed(3)} KWD</td>
-                    <td>${item['Supplier']}</td>
-                </tr>`;
+                    <td><strong>${supp}</strong></td>
+                    <td>
+                        <span class="badge badge-blue badge-interactive" onclick="showSupplierItemsModal('${supp}')">
+                            ${s.count} Items
+                        </span>
+                    </td>
+                    <td>${avg} KWD</td>
+                    <td>${s.minPrice.toFixed(3)} KWD</td>
+                    <td>${s.maxPrice.toFixed(3)} KWD</td>
+                    <td><span class="badge badge-green">${originsArr || 'N/A'}</span></td>
+                </tr>
+            `;
         });
     }
 
     function filterItems() {
-        const search = document.getElementById('searchInput').value.toLowerCase();
+        const query = document.getElementById('searchInput').value.toLowerCase();
         const supplier = document.getElementById('supplierFilter').value;
         const origin = document.getElementById('originFilter').value;
-        const sortOrder = document.getElementById('sortFilter').value;
+        const sort = document.getElementById('sortFilter').value;
 
-        let filtered = masterData.filter(item => {
-            const matchSearch = (item['Item Name'] || '').toLowerCase().includes(search) ||
-                                (item['Item Code'] || '').toLowerCase().includes(search) ||
-                                (item['Supplier'] || '').toLowerCase().includes(search);
-            const matchSupplier = supplier === '' || item['Supplier'] === supplier;
-            const matchOrigin = origin === '' || item['Origin'] === origin;
-            return matchSearch && matchSupplier && matchOrigin;
+        currentFilteredItems = masterData.filter(item => {
+            const matchesQuery = !query || 
+                (item['Item Name'] && item['Item Name'].toLowerCase().includes(query)) ||
+                (item['Item Code'] && item['Item Code'].toLowerCase().includes(query)) ||
+                (item['Supplier'] && item['Supplier'].toLowerCase().includes(query));
+            const matchesSupplier = !supplier || item.Supplier === supplier;
+            const matchesOrigin = !origin || item.Origin === origin;
+            return matchesQuery && matchesSupplier && matchesOrigin;
         });
 
-        // Sorting Logic
-        if (sortOrder === 'price-asc') {
-            filtered.sort((a, b) => getItemPrice(a) - getItemPrice(b));
-        } else if (sortOrder === 'price-desc') {
-            filtered.sort((a, b) => getItemPrice(b) - getItemPrice(a));
-        } else if (sortOrder === 'name-asc') {
-            filtered.sort((a, b) => (a['Item Name'] || '').localeCompare(b['Item Name'] || ''));
-        }
+        currentFilteredItems.sort((a, b) => {
+            const priceA = getItemPrice(a);
+            const priceB = getItemPrice(b);
+            if (sort === 'price-asc') return priceA - priceB;
+            if (sort === 'price-desc') return priceB - priceA;
+            if (sort === 'name-asc') return (a['Item Name'] || '').localeCompare(b['Item Name'] || '');
+            return 0;
+        });
 
-        currentFilteredItems = filtered;
-        renderItemsTable(filtered);
+        renderItemsTable(currentFilteredItems);
     }
 
-    function exportItemsToExcel() {
-        if (!currentFilteredItems || currentFilteredItems.length === 0) {
-            alert("No items available to export!");
+    function renderItemsTable(items) {
+        const tbody = document.getElementById('itemsTableBody');
+        tbody.innerHTML = '';
+
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">No matching items found.</td></tr>';
             return;
         }
 
-        const exportData = currentFilteredItems.map(item => ({
-            'Item Code': item['Item Code'] || '',
-            'Item Name': item['Item Name'] || '',
-            'UOM': item['UOM'] || '',
-            'Origin': item['Origin'] || '',
-            'Price (KWD)': getItemPrice(item).toFixed(3),
-            'Supplier': item['Supplier'] || ''
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(exportData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Master Price List");
-        XLSX.writeFile(wb, "Item_Price_Comparison.xlsx");
+        items.forEach(item => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item['Item Code'] || '-'}</td>
+                    <td><strong>${item['Item Name'] || '-'}</strong></td>
+                    <td>${item['UOM'] || '-'}</td>
+                    <td><span class="badge badge-green">${item['Origin'] || '-'}</span></td>
+                    <td><strong>${getItemPrice(item).toFixed(3)} KWD</strong></td>
+                    <td>${item['Supplier'] || '-'}</td>
+                </tr>
+            `;
+        });
     }
 
-    // Master File Upload
-    document.getElementById('excelFile').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    function setupEventListeners() {
+        // Master Excel Upload
+        document.getElementById('excelFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.SheetNames[0];
+                const parsedData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+                if (parsedData.length) {
+                    initDashboard(parsedData);
+                    alert("Master Data Updated Successfully!");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const data = new Uint8Array(event.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const json = XLSX.utils.sheet_to_json(sheet);
-
-            if (json.length > 0) {
-                initDashboard(json);
-                alert("Master sheet uploaded and dashboard updated!");
-            }
-        };
-        reader.readAsArrayBuffer(file);
-    });
-
-    // Store Request Upload & Cheap Supplier Finder
-    document.getElementById('requestFile').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const data = new Uint8Array(event.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const json = XLSX.utils.sheet_to_json(sheet);
-
-            processStoreRequest(json);
-        };
-        reader.readAsArrayBuffer(file);
-    });
+        // Store Request Upload
+        document.getElementById('requestFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.SheetNames[0];
+                const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+                processStoreRequest(rawData);
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
 
     function processStoreRequest(requestData) {
         processedRequestData = [];
@@ -1047,77 +1020,87 @@
         tbody.innerHTML = '';
 
         requestData.forEach(row => {
-            const itemName = row['Item Name'] || row['Item'] || row['Description'];
-            const qty = parseFloat(row['Quantity'] || row['Qty'] || 0);
+            const reqName = row['Item Name'] || row['Item'] || row['Description'] || '';
+            const qty = parseFloat(row['Quantity'] || row['Qty'] || 1);
 
-            if (!itemName) return;
+            if (!reqName) return;
 
-            // Find matching suppliers in Master Sheet
+            // Find matching items in master dataset
             const matches = masterData.filter(m => 
-                (m['Item Name'] || '').toLowerCase().trim() === itemName.toLowerCase().trim()
+                m['Item Name'] && m['Item Name'].toLowerCase().trim() === reqName.toLowerCase().trim()
             );
 
             if (matches.length > 0) {
-                // Find cheapest supplier
+                // Pick cheapest match
                 matches.sort((a, b) => getItemPrice(a) - getItemPrice(b));
                 const cheapest = matches[0];
                 const unitPrice = getItemPrice(cheapest);
                 const totalPrice = unitPrice * qty;
 
                 processedRequestData.push({
-                    'Item Name': itemName,
+                    'Item Name': reqName,
                     'Qty': qty,
                     'UOM': cheapest['UOM'] || 'Unit',
-                    'Cheap Supplier': cheapest['Supplier'],
-                    'Unit Price': unitPrice,
-                    'Total Price': totalPrice,
-                    'Status': 'Found'
+                    'Supplier': cheapest['Supplier'],
+                    'Unit Price (KWD)': unitPrice,
+                    'Total Price (KWD)': totalPrice,
+                    'Status': 'Match Found'
                 });
 
                 tbody.innerHTML += `
                     <tr>
-                        <td><strong>${itemName}</strong></td>
+                        <td><strong>${reqName}</strong></td>
                         <td>${qty}</td>
                         <td>${cheapest['UOM'] || '-'}</td>
                         <td><span class="badge badge-blue">${cheapest['Supplier']}</span></td>
                         <td>${unitPrice.toFixed(3)} KWD</td>
                         <td><strong>${totalPrice.toFixed(3)} KWD</strong></td>
-                        <td><span class="badge badge-green">Matched</span></td>
-                    </tr>`;
+                        <td><span class="badge badge-green">Match Found</span></td>
+                    </tr>
+                `;
             } else {
                 processedRequestData.push({
-                    'Item Name': itemName,
+                    'Item Name': reqName,
                     'Qty': qty,
-                    'UOM': '-',
-                    'Cheap Supplier': 'N/A',
-                    'Unit Price': 0,
-                    'Total Price': 0,
+                    'UOM': 'N/A',
+                    'Supplier': 'N/A',
+                    'Unit Price (KWD)': 0,
+                    'Total Price (KWD)': 0,
                     'Status': 'Not Found'
                 });
 
                 tbody.innerHTML += `
                     <tr>
-                        <td><strong>${itemName}</strong></td>
+                        <td><strong>${reqName}</strong></td>
                         <td>${qty}</td>
                         <td>-</td>
-                        <td><em>No supplier found</em></td>
+                        <td>-</td>
                         <td>-</td>
                         <td>-</td>
                         <td><span class="badge badge-red">Not Found</span></td>
-                    </tr>`;
+                    </tr>
+                `;
             }
         });
 
-        document.getElementById('exportBtn').style.display = 'inline-block';
+        if (processedRequestData.length > 0) {
+            document.getElementById('exportBtn').style.display = 'inline-block';
+        }
+    }
+
+    function exportItemsToExcel() {
+        const worksheet = XLSX.utils.json_to_sheet(currentFilteredItems);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Filtered Items");
+        XLSX.writeFile(workbook, "Light_Fields_Master_Items.xlsx");
     }
 
     function exportCheapestQuote() {
-        if (processedRequestData.length === 0) return;
-
-        const ws = XLSX.utils.json_to_sheet(processedRequestData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Cheapest Quote");
-        XLSX.writeFile(wb, "Cheapest_Supplier_Quote.xlsx");
+        if (!processedRequestData.length) return;
+        const worksheet = XLSX.utils.json_to_sheet(processedRequestData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Cheapest Quote");
+        XLSX.writeFile(workbook, "Cheapest_Supplier_Quote.xlsx");
     }
 </script>
 </body>
