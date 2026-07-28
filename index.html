@@ -305,6 +305,149 @@
         .clickable-supplier:hover {
             color: #1b6aaa;
         }
+    
+        /* PROFESSIONAL UI UPGRADE */
+        .brand-mark {
+            width: 42px; height: 42px; border-radius: 12px;
+            display: grid; place-items: center; margin: 0 auto 10px;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: #fff; font-size: 20px; box-shadow: 0 8px 20px rgba(52,152,219,.25);
+        }
+        .sidebar-header { padding: 24px 18px 20px; }
+        .sidebar-header h2 { letter-spacing: .3px; }
+        .nav-item { border-radius: 0 10px 10px 0; margin: 3px 10px 3px 0; border-left-width: 3px; }
+        header {
+            position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(10px); background: rgba(255,255,255,.94);
+        }
+        header h1 { font-size: 22px; font-weight: 750; }
+        .header-actions { display:flex; align-items:center; gap:10px; }
+        .header-status {
+            font-size:12px; color:#667085; background:#f7f9fc; border:1px solid #e7ebf0;
+            padding:8px 12px; border-radius:20px;
+        }
+        .dashboard-hero {
+            background: linear-gradient(135deg, #243b53 0%, #2c3e50 55%, #3498db 140%);
+            color:#fff; border-radius:16px; padding:24px 26px; margin-bottom:20px;
+            box-shadow:0 12px 30px rgba(44,62,80,.18);
+        }
+        .dashboard-hero h2 { margin:0 0 6px; font-size:24px; }
+        .dashboard-hero p { margin:0; color:rgba(255,255,255,.78); font-size:13px; }
+        .kpi-card { border:1px solid #edf0f4; border-left-width:5px; box-shadow:0 5px 18px rgba(16,24,40,.06); }
+        .chart-card, .table-container { border:1px solid #edf0f4; box-shadow:0 5px 18px rgba(16,24,40,.06); }
+        .chart-card h3 { color:#243b53; font-size:15px; }
+        .section-title { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+        .section-title h3 { margin:0; color:#243b53; }
+        .section-subtitle { color:#667085; font-size:12px; margin:4px 0 0; }
+        .master-sync-banner {
+            display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+            padding:12px 15px; margin-bottom:15px; background:#f0f8ff; border:1px solid #cfe8ff;
+            border-radius:10px; color:#245b7a; font-size:13px;
+        }
+        .bulk-grid {
+            display:grid; grid-template-columns:repeat(6, minmax(130px,1fr)); gap:10px;
+            padding:15px; background:#f8fafc; border:1px solid #e7ebf0; border-radius:10px;
+        }
+        .bulk-grid .form-group label { font-size:11px; }
+        .bulk-grid input, .bulk-grid select { width:100%; }
+        .order-actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .btn-outline { background:#fff; color:var(--primary); border:1px solid #cfd6de; }
+        .btn-danger { background:#e74c3c; }
+        .btn-small { padding:6px 10px; font-size:12px; }
+        .empty-state { padding:28px; text-align:center; color:#7f8c8d; }
+        .table-container table { min-width: 900px; }
+        .date-display { white-space:nowrap; font-weight:600; }
+        @media (max-width: 900px) {
+            .sidebar { width:210px; }
+            .bulk-grid { grid-template-columns:repeat(3, minmax(120px,1fr)); }
+        }
+        @media (max-width: 650px) {
+            body { display:block; overflow:auto; }
+            .sidebar { width:100%; height:auto; }
+            .nav-list { display:flex; overflow-x:auto; margin:8px 0; }
+            .nav-item { white-space:nowrap; border-left:0; border-bottom:3px solid transparent; border-radius:8px; }
+            .nav-item:hover, .nav-item.active { border-left-color:transparent; border-bottom-color:var(--accent); }
+            .main-wrapper { overflow:visible; }
+            header { position:relative; padding:12px 15px; }
+            .container { padding:15px; }
+            .bulk-grid { grid-template-columns:1fr 1fr; }
+            .header-status { display:none; }
+        }
+
+    
+        /* Store Order Tracker - Correct 5-column layout */
+        #order-tracker-tab .form-grid {
+            display: grid !important;
+            grid-template-columns: minmax(190px, 0.95fr) minmax(120px, 0.55fr) minmax(260px, 1.45fr) minmax(190px, 0.95fr) minmax(120px, 0.65fr) !important;
+            gap: 14px !important;
+            align-items: end !important;
+        }
+
+        #order-tracker-tab .form-grid > .form-group {
+            min-width: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+        }
+
+        #order-tracker-tab .form-grid > .form-group label {
+            display: block !important;
+            width: 100% !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            line-height: 1.25 !important;
+            margin-bottom: 7px !important;
+        }
+
+        #order-tracker-tab .form-grid > .form-group input,
+        #order-tracker-tab .form-grid > .form-group select {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            height: 48px !important;
+            min-height: 48px !important;
+        }
+
+        /* Keep Item Code and UOM compact */
+        #order-tracker-tab #orderItemCodeInput,
+        #order-tracker-tab #orderUomInput {
+            width: 100% !important;
+        }
+
+        /* Item Name gets the largest space */
+        #order-tracker-tab #orderItemInput {
+            width: 100% !important;
+        }
+
+        /* Quantity starts a new row */
+        #order-tracker-tab .form-grid > .form-group:nth-child(6) {
+            grid-column: 1 / 2 !important;
+            margin-top: 2px !important;
+        }
+
+        /* Submit button starts below */
+        #order-tracker-tab .form-grid > .form-group:nth-child(7) {
+            grid-column: 1 / -1 !important;
+            margin-top: 2px !important;
+        }
+
+        @media (max-width: 1100px) {
+            #order-tracker-tab .form-grid {
+                grid-template-columns: minmax(160px, 0.9fr) minmax(105px, 0.55fr) minmax(210px, 1.3fr) minmax(160px, 0.9fr) minmax(105px, 0.65fr) !important;
+                gap: 10px !important;
+            }
+        }
+
+        @media (max-width: 850px) {
+            #order-tracker-tab .form-grid {
+                grid-template-columns: 1fr 1fr !important;
+            }
+
+            #order-tracker-tab .form-grid > .form-group:nth-child(6),
+            #order-tracker-tab .form-grid > .form-group:nth-child(7) {
+                grid-column: 1 / -1 !important;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -344,6 +487,7 @@
 <!-- Left Vertical Sidebar Navigation -->
 <div class="sidebar">
     <div class="sidebar-header">
+        <div class="brand-mark">LF</div>
         <h2>Light Fields</h2>
         <p>Foodstuff Operations Portal</p>
     </div>
@@ -374,17 +518,21 @@
 <div class="main-wrapper">
     <header>
         <h1 id="pageTitle">Executive Dashboard</h1>
-        <div id="uploadMasterContainer">
+        <div class="header-actions"><span class="header-status" id="masterStatus">Master list: 0 items</span><div id="uploadMasterContainer">
             <label for="excelFile" class="btn btn-green" style="font-size:13px; cursor:pointer;">📂 Upload Master Sheet</label>
             <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" style="display:none;" onchange="handleMasterFileUpload(event)">
-        </div>
+            </div></div>
     </header>
 
     <div class="container">
 
         <!-- TAB 0: EXECUTIVE DASHBOARD -->
         <div id="dashboard-tab" class="tab-content active">
-            
+            <div class="dashboard-hero">
+                <h2>Operations Command Center</h2>
+                <p>Monitor store orders, master catalog coverage, supplier performance and purchasing activity from one professional view.</p>
+            </div>
+
             <div class="dashboard-header-bar">
                 <div style="font-weight:bold; color:var(--primary); font-size:15px;">📅 Dashboard Global Filter</div>
                 <div style="display:flex; gap:10px; align-items:center;">
@@ -469,9 +617,14 @@
                         <input type="date" id="orderDateInput" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label>Item Name (Type for Suggestions)</label>
-                        <input type="text" id="orderItemInput" list="masterItemsList" class="form-control" placeholder="Type or Select Item..." onchange="autoFillItemDetails()">
+                        <label>Item Code (Enter from Master)</label>
+                        <input type="text" id="orderItemCodeInput" list="masterItemCodesList" class="form-control" placeholder="Enter Item Code" oninput="autoFillFromItemCode()" title="Enter Item Code from Master List">
+                    </div>
+                    <div class="form-group">
+                        <label>Item Name (Auto from Code / Search Master)</label>
+                        <input type="text" id="orderItemInput" list="masterItemsList" class="form-control" placeholder="Type or Select Item..." oninput="autoFillItemDetails()" onchange="autoFillItemDetails()">
                         <datalist id="masterItemsList"></datalist>
+                        <datalist id="masterItemCodesList"></datalist>
                     </div>
                     <div class="form-group">
                         <label>Origin (Select Desired Country)</label>
@@ -480,7 +633,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>UOM</label>
+                        <label>UOM (Auto from Master)</label>
                         <input type="text" id="orderUomInput" class="form-control" placeholder="UOM (e.g. Kg, Bag)">
                     </div>
                     <div class="form-group">
@@ -494,11 +647,23 @@
 
                 <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
 
-                <h3>📥 Bulk Orders Upload</h3>
-                <p style="font-size:13px; color:#666;">Upload Excel sheet with columns: <strong>Item Name</strong>, <strong>Quantity</strong>, <strong>Date</strong>, <strong>Origin</strong>, <strong>UOM</strong>.</p>
-                <div style="display:flex; gap:10px;">
-                    <label for="bulkOrderFile" class="btn btn-green">📄 Select & Upload Bulk Order File</label>
-                    <input type="file" id="bulkOrderFile" accept=".xlsx, .xls, .csv" style="display:none;" onchange="handleBulkOrderUpload(event)">
+                <div class="section-title">
+                    <div>
+                        <h3>📥 Bulk Place Orders</h3>
+                        <div class="section-subtitle">Upload a template, review and change Date, Item Code, Item Name, Origin, UOM and Requested Qty before placing all orders.</div>
+                    </div>
+                    <div class="order-actions">
+                        <button class="btn btn-outline btn-small" onclick="downloadBulkTemplate()">⬇ Download Template</button>
+                        <label for="bulkOrderFile" class="btn btn-green btn-small">📄 Upload Bulk File</label>
+                        <input type="file" id="bulkOrderFile" accept=".xlsx, .xls, .csv" style="display:none;" onchange="handleBulkOrderUpload(event)">
+                    </div>
+                </div>
+                <div id="bulkOrdersEditor" style="display:none;">
+                    <div class="bulk-grid" id="bulkOrdersGrid"></div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px;">
+                        <button class="btn btn-outline" onclick="clearBulkDraft()">Clear Draft</button>
+                        <button class="btn btn-green" onclick="submitBulkDraft()">🚀 Place All Bulk Orders</button>
+                    </div>
                 </div>
             </div>
 
@@ -517,6 +682,7 @@
                         <tr>
                             <th>Date</th>
                             <th>Order ID</th>
+                            <th>Item Code</th>
                             <th>Item Name</th>
                             <th>Origin</th>
                             <th>UOM</th>
@@ -527,7 +693,7 @@
                         </tr>
                     </thead>
                     <tbody id="ordersTableBody">
-                        <tr><td colspan="9" style="text-align:center;">No active orders found.</td></tr>
+                        <tr><td colspan="10" style="text-align:center;">No active orders found.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -593,7 +759,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Date</th>
+                            <th>Date (DD-MM-YYYY)</th>
                             <th>Item Name</th>
                             <th>Origin</th>
                             <th>Qty</th>
@@ -604,7 +770,7 @@
                         </tr>
                     </thead>
                     <tbody id="requestTableBody">
-                        <tr><td colspan="8" style="text-align:center;">No store requests found.</td></tr>
+                        <tr><td colspan="9" style="text-align:center;">No store requests found.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -626,9 +792,214 @@
 
     let currentUser = 'Guest';
 
+    const MASTER_STORAGE_KEY = 'lightFields_masterData_v2';
+    const ORDERS_STORAGE_KEY = 'lightFields_ordersList_v2';
+    let bulkDraft = [];
+
+    function normalizeMasterRow(row) {
+        return {
+            'Item Code': String(row['Item Code'] ?? row['ItemCode'] ?? row['Code'] ?? '').trim(),
+            'Item Name': String(row['Item Name'] ?? row['Item'] ?? row['itemName'] ?? '').trim(),
+            'UOM': String(row['UOM'] ?? row['Uom'] ?? row['Unit'] ?? '').trim(),
+            'Origin': String(row['Origin'] ?? row['Country'] ?? '').trim(),
+            'Price (KWD)': parseFloat(row['Price (KWD)'] ?? row['Price'] ?? 0) || 0,
+            'Supplier': String(row['Supplier'] ?? row['Supplier Name'] ?? '').trim()
+        };
+    }
+
+    function saveAppData() {
+        localStorage.setItem(MASTER_STORAGE_KEY, JSON.stringify(masterData));
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(ordersList));
+    }
+
+    function loadAppData() {
+        try {
+            const savedMaster = JSON.parse(localStorage.getItem(MASTER_STORAGE_KEY) || 'null');
+            const savedOrders = JSON.parse(localStorage.getItem(ORDERS_STORAGE_KEY) || 'null');
+            if (Array.isArray(savedMaster) && savedMaster.length) masterData = savedMaster.map(normalizeMasterRow);
+            if (Array.isArray(savedOrders)) ordersList = savedOrders;
+        } catch (err) {
+            console.warn('Saved application data could not be loaded.', err);
+        }
+    }
+
+    function formatDateDMY(value) {
+        if (!value) return '';
+        const s = String(value).trim();
+        let d;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+            const [y,m,day] = s.split('-').map(Number);
+            d = new Date(y, m - 1, day);
+        } else if (/^\d{1,2}[\/-]\d{1,2}[\/-]\d{4}$/.test(s)) {
+            const parts = s.split(/[\/-]/).map(Number);
+            d = new Date(parts[2], parts[1] - 1, parts[0]);
+        } else {
+            d = new Date(s);
+        }
+        if (isNaN(d.getTime())) return s;
+        return String(d.getDate()).padStart(2,'0') + '-' +
+               String(d.getMonth()+1).padStart(2,'0') + '-' + d.getFullYear();
+    }
+
+    function normalizeDateForStorage(value) {
+        if (!value) return '';
+        const s = String(value).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        if (/^\d{1,2}[\/-]\d{1,2}[\/-]\d{4}$/.test(s)) {
+            const [day, month, year] = s.split(/[\/-]/).map(Number);
+            return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        }
+        const d = new Date(s);
+        if (isNaN(d.getTime())) return s;
+        return d.toISOString().split('T')[0];
+    }
+
+    function updateMasterStatus() {
+        const el = document.getElementById('masterStatus');
+        if (el) el.textContent = `Master list: ${masterData.length} items`;
+    }
+
+    function getMasterItem(itemCode, itemName, origin) {
+        return masterData.find(m =>
+            (itemCode && String(m['Item Code']).toLowerCase() === String(itemCode).toLowerCase()) ||
+            (itemName && String(m['Item Name']).toLowerCase() === String(itemName).toLowerCase() &&
+             (!origin || String(m.Origin).toLowerCase() === String(origin).toLowerCase()))
+        );
+    }
+
+    function getNextOrderId() {
+        return ordersList.length ? Math.max(...ordersList.map(o => Number(o.id) || 0)) + 1 : 101;
+    }
+
+    function getMasterOptionsHtml(selectedCode='') {
+        return '<option value="">Select Code</option>' +
+            masterData.map(m => `<option value="${String(m['Item Code']||'').replace(/"/g,'&quot;')}" ${String(m['Item Code'])===String(selectedCode)?'selected':''}>${m['Item Code']} — ${m['Item Name']}</option>`).join('');
+    }
+
+    function syncBulkRow(index, field, value) {
+        const row = bulkDraft[index];
+        if (!row) return;
+        row[field] = value;
+        if (field === 'itemCode') {
+            const match = getMasterItem(value, '', '');
+            if (match) {
+                row.itemName = match['Item Name'];
+                row.origin = match.Origin || '';
+                row.uom = match.UOM || '';
+            }
+        } else if (field === 'itemName') {
+            const match = getMasterItem('', value, row.origin);
+            if (match) {
+                row.itemCode = match['Item Code'] || '';
+                row.origin = match.Origin || row.origin;
+                row.uom = match.UOM || row.uom;
+            }
+        } else if (field === 'origin') {
+            const match = getMasterItem(row.itemCode, row.itemName, value);
+            if (match) row.uom = match.UOM || row.uom;
+        }
+        renderBulkDraft();
+    }
+
+    function removeBulkRow(index) {
+        bulkDraft.splice(index, 1);
+        renderBulkDraft();
+    }
+
+    function renderBulkDraft() {
+        const wrap = document.getElementById('bulkOrdersEditor');
+        const grid = document.getElementById('bulkOrdersGrid');
+        if (!bulkDraft.length) {
+            wrap.style.display = 'none';
+            grid.innerHTML = '';
+            return;
+        }
+        wrap.style.display = 'block';
+        grid.innerHTML = bulkDraft.map((r, i) => `
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" class="form-control" value="${normalizeDateForStorage(r.date)}" onchange="syncBulkRow(${i},'date',this.value)">
+            </div>
+            <div class="form-group">
+                <label>Item Code</label>
+                <select class="form-control" onchange="syncBulkRow(${i},'itemCode',this.value)">${getMasterOptionsHtml(r.itemCode)}</select>
+            </div>
+            <div class="form-group">
+                <label>Item Name</label>
+                <input class="form-control" value="${String(r.itemName||'').replace(/"/g,'&quot;')}" onchange="syncBulkRow(${i},'itemName',this.value)">
+            </div>
+            <div class="form-group">
+                <label>Origin</label>
+                <input class="form-control" value="${String(r.origin||'').replace(/"/g,'&quot;')}" onchange="syncBulkRow(${i},'origin',this.value)">
+            </div>
+            <div class="form-group">
+                <label>UOM</label>
+                <input class="form-control" value="${String(r.uom||'').replace(/"/g,'&quot;')}" onchange="syncBulkRow(${i},'uom',this.value)">
+            </div>
+            <div class="form-group">
+                <label>Requested Qty <button class="btn btn-danger btn-small" style="float:right" onclick="removeBulkRow(${i})">✕</button></label>
+                <input type="number" min="1" class="form-control" value="${r.requestQty||''}" onchange="syncBulkRow(${i},'requestQty',this.value)">
+            </div>
+        `).join('');
+    }
+
+    function clearBulkDraft() {
+        bulkDraft = [];
+        renderBulkDraft();
+        const file = document.getElementById('bulkOrderFile');
+        if (file) file.value = '';
+    }
+
+    function submitBulkDraft() {
+        if (!bulkDraft.length) return;
+        let added = 0;
+        bulkDraft.forEach(r => {
+            const qty = parseInt(r.requestQty, 10);
+            const date = normalizeDateForStorage(r.date);
+            if (!r.itemName || !qty || qty <= 0 || !date) return;
+            const match = getMasterItem(r.itemCode, r.itemName, r.origin);
+            ordersList.push({
+                date,
+                id: getNextOrderId(),
+                itemCode: r.itemCode || (match ? match['Item Code'] : ''),
+                itemName: r.itemName,
+                origin: r.origin || (match ? match.Origin : 'N/A'),
+                uom: r.uom || (match ? match.UOM : 'Pcs'),
+                requestQty: qty,
+                receivedQty: 0,
+                status: 'Pending',
+                supplier: match ? match.Supplier : 'Pending Allocation'
+            });
+            added++;
+        });
+        saveAppData();
+        clearBulkDraft();
+        showToast(`${added} bulk orders placed successfully.`);
+        initDashboard();
+    }
+
+    function downloadBulkTemplate() {
+        const rows = [{
+            Date: formatDateDMY(new Date()),
+            'Item Code': masterData[0]?.['Item Code'] || '',
+            'Item Name': masterData[0]?.['Item Name'] || '',
+            Origin: masterData[0]?.Origin || '',
+            UOM: masterData[0]?.UOM || '',
+            'Requested Qty': 1
+        }];
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Bulk Orders');
+        XLSX.writeFile(wb, 'Light_Fields_Bulk_Order_Template.xlsx');
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
+        loadAppData();
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('orderDateInput').value = today;
+        updateMasterStatus();
+        populateDatalist();
+        initDashboard();
     });
 
     function loginUser() {
@@ -692,12 +1063,21 @@
         { date: "2026-07-24", id: 103, itemName: "Olive Oil Extra Virgin", origin: "Spain", uom: "Litre", requestQty: 40, receivedQty: 0, status: "Pending", supplier: "Mediterranean Imports" }
     ];
 
+    ordersList = ordersList.map(o => {
+        if (!o.itemCode) {
+            const m = getMasterItem('', o.itemName, o.origin);
+            if (m) o.itemCode = m['Item Code'] || '';
+        }
+        return o;
+    });
+
     let countChartInstance = null;
     let priceChartInstance = null;
     let statusChartInstance = null;
     let supplierReceivedChartInstance = null;
 
     function initDashboard() {
+        updateMasterStatus();
         updateKPIs();
         populateDatalist();
         populateFilters();
@@ -761,37 +1141,105 @@
     // ITEM & ORIGIN MATCHING LOGIC FOR STORE GUY
     function populateDatalist() {
         const datalist = document.getElementById('masterItemsList');
+        const codeList = document.getElementById('masterItemCodesList');
+
         datalist.innerHTML = '';
-        
-        const uniqueItems = [...new Set(masterData.map(d => d['Item Name']))];
+        codeList.innerHTML = '';
+
+        const uniqueItems = [...new Set(masterData.map(d => d['Item Name']).filter(Boolean))];
         uniqueItems.forEach(item => {
             const option = document.createElement('option');
             option.value = item;
             datalist.appendChild(option);
         });
+
+        const uniqueCodes = [...new Set(masterData.map(d => d['Item Code']).filter(Boolean))];
+        uniqueCodes.forEach(code => {
+            const option = document.createElement('option');
+            option.value = code;
+            codeList.appendChild(option);
+        });
+    }
+
+    function autoFillFromItemCode() {
+        const code = document.getElementById('orderItemCodeInput').value.trim();
+        const itemNameInput = document.getElementById('orderItemInput');
+        const originSelect = document.getElementById('orderOriginSelect');
+        const uomInput = document.getElementById('orderUomInput');
+
+        itemNameInput.value = '';
+        originSelect.innerHTML = '<option value="">Select Origin...</option>';
+        uomInput.value = '';
+
+        if (!code) return;
+
+        const matchingItems = masterData.filter(d =>
+            String(d['Item Code'] || '').trim().toLowerCase() === code.toLowerCase()
+        );
+
+        if (!matchingItems.length) return;
+
+        const firstMatch = matchingItems[0];
+        itemNameInput.value = firstMatch['Item Name'] || '';
+        uomInput.value = firstMatch.UOM || '';
+
+        const origins = [...new Set(
+            matchingItems.map(m => String(m.Origin || '').trim()).filter(Boolean)
+        )];
+
+        origins.forEach(origin => {
+            const opt = document.createElement('option');
+            opt.value = origin;
+            opt.innerText = origin;
+            originSelect.appendChild(opt);
+        });
+
+        if (origins.length === 1) {
+            originSelect.value = origins[0];
+            autoFillUOMFromOrigin();
+        }
     }
 
     function autoFillItemDetails() {
         const itemName = document.getElementById('orderItemInput').value.trim();
+        const codeInput = document.getElementById('orderItemCodeInput');
         const originSelect = document.getElementById('orderOriginSelect');
         const uomInput = document.getElementById('orderUomInput');
 
-        originSelect.innerHTML = '<option value="">Select Origin...</option>';
+        // Item Code is displayed from the Master List and cannot be manually edited.
+        // Store Keeper can type/select the Item Name, and the matching Item Code/UOM
+        // are automatically filled from Master List.
+        codeInput.value = '';
         uomInput.value = '';
+        originSelect.innerHTML = '<option value="">Select Origin...</option>';
 
         if (!itemName) return;
 
-        const matchingItems = masterData.filter(d => d['Item Name'].toLowerCase() === itemName.toLowerCase());
+        const matchingItems = masterData.filter(d =>
+            String(d['Item Name'] || '').trim().toLowerCase() === itemName.toLowerCase()
+        );
 
         if (matchingItems.length > 0) {
-            const origins = [...new Set(matchingItems.map(m => m.Origin))];
-            origins.forEach(orig => {
+            // Automatically show the master Item Code.
+            // If the same Item Name exists with multiple codes, use the first
+            // matching master record and keep Origin selectable.
+            const firstMatch = matchingItems[0];
+            codeInput.value = firstMatch['Item Code'] || '';
+            uomInput.value = firstMatch.UOM || '';
+
+            // Origin is the only field the Store Keeper needs to choose/change.
+            const origins = [...new Set(
+                matchingItems.map(m => String(m.Origin || '').trim()).filter(Boolean)
+            )];
+
+            origins.forEach(origin => {
                 const opt = document.createElement('option');
-                opt.value = orig;
-                opt.innerText = orig;
+                opt.value = origin;
+                opt.innerText = origin;
                 originSelect.appendChild(opt);
             });
 
+            // If only one origin exists, select it automatically.
             if (origins.length === 1) {
                 originSelect.value = origins[0];
                 autoFillUOMFromOrigin();
@@ -801,22 +1249,28 @@
 
     function autoFillUOMFromOrigin() {
         const itemName = document.getElementById('orderItemInput').value.trim();
-        const selectedOrigin = document.getElementById('orderOriginSelect').value;
+        const selectedOrigin = document.getElementById('orderOriginSelect').value.trim();
         const uomInput = document.getElementById('orderUomInput');
+        const codeInput = document.getElementById('orderItemCodeInput');
 
-        if (itemName && selectedOrigin) {
-            const itemMatch = masterData.find(d => 
-                d['Item Name'].toLowerCase() === itemName.toLowerCase() && 
-                d.Origin.toLowerCase() === selectedOrigin.toLowerCase()
-            );
-            if (itemMatch) {
-                uomInput.value = itemMatch.UOM || '';
-            }
+        if (!itemName || !selectedOrigin) return;
+
+        const itemMatch = masterData.find(d =>
+            String(d['Item Name'] || '').trim().toLowerCase() === itemName.toLowerCase() &&
+            String(d.Origin || '').trim().toLowerCase() === selectedOrigin.toLowerCase()
+        );
+
+        if (itemMatch) {
+            // Origin can be changed by Store Keeper.
+            // Item Code and UOM always come from the selected Master List row.
+            codeInput.value = itemMatch['Item Code'] || '';
+            uomInput.value = itemMatch.UOM || '';
         }
     }
 
     function submitSingleOrder() {
         const date = document.getElementById('orderDateInput').value;
+        const itemCode = document.getElementById('orderItemCodeInput').value.trim();
         const itemName = document.getElementById('orderItemInput').value.trim();
         const origin = document.getElementById('orderOriginSelect').value.trim() || 'N/A';
         const uom = document.getElementById('orderUomInput').value.trim();
@@ -827,25 +1281,34 @@
             return;
         }
 
-        const newId = 101 + ordersList.length;
+        const masterMatch = getMasterItem(itemCode, itemName, origin);
+        if (!masterMatch) {
+            alert('Please select a valid Item Code / Item Name from the Master List.');
+            return;
+        }
+
+        const newId = getNextOrderId();
         ordersList.push({
             date: date,
             id: newId,
-            itemName: itemName,
-            origin: origin,
-            uom: uom || 'Pcs',
+            itemCode: masterMatch['Item Code'] || itemCode,
+            itemName: masterMatch['Item Name'] || itemName,
+            origin: origin || masterMatch.Origin || 'N/A',
+            uom: masterMatch.UOM || uom || 'Pcs',
+            supplier: masterMatch.Supplier || 'Pending Allocation',
             requestQty: qty,
             receivedQty: 0,
-            status: 'Pending',
-            supplier: 'Pending Allocation'
+            status: 'Pending'
         });
 
         // Reset Inputs
+        document.getElementById('orderItemCodeInput').value = '';
         document.getElementById('orderItemInput').value = '';
         document.getElementById('orderOriginSelect').innerHTML = '<option value="">Select Origin...</option>';
         document.getElementById('orderUomInput').value = '';
         document.getElementById('orderQtyInput').value = '';
 
+        saveAppData();
         showToast(`Order #${newId} submitted for ${itemName}!`);
         initDashboard();
     }
@@ -856,37 +1319,33 @@
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const json = XLSX.utils.sheet_to_json(sheet);
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-            let addedCount = 0;
-            json.forEach((row, i) => {
-                const name = row['Item Name'] || row['Item'] || row['itemName'];
-                const qty = row['Quantity'] || row['Qty'] || row['requestQty'];
-                const date = row['Date'] || document.getElementById('orderDateInput').value;
-                const origin = row['Origin'] || 'N/A';
-                const uom = row['UOM'] || 'Unit';
+                bulkDraft = json.map(row => {
+                    const itemCode = row['Item Code'] || row['ItemCode'] || row['Code'] || '';
+                    const itemName = row['Item Name'] || row['Item'] || row['itemName'] || '';
+                    const origin = row['Origin'] || '';
+                    const match = getMasterItem(itemCode, itemName, origin);
+                    return {
+                        date: normalizeDateForStorage(row['Date'] || row['Order Date'] || document.getElementById('orderDateInput').value),
+                        itemCode: itemCode || (match ? match['Item Code'] : ''),
+                        itemName: itemName || (match ? match['Item Name'] : ''),
+                        origin: origin || (match ? match.Origin : ''),
+                        uom: row['UOM'] || row['Uom'] || (match ? match.UOM : ''),
+                        requestQty: row['Requested Qty'] || row['Quantity'] || row['Qty'] || row['requestQty'] || ''
+                    };
+                }).filter(r => r.itemName || r.itemCode);
 
-                if (name && qty) {
-                    ordersList.push({
-                        date: date,
-                        id: 101 + ordersList.length,
-                        itemName: name,
-                        origin: origin,
-                        uom: uom,
-                        requestQty: parseInt(qty),
-                        receivedQty: 0,
-                        status: 'Pending',
-                        supplier: 'Pending Allocation'
-                    });
-                    addedCount++;
-                }
-            });
-
-            showToast(`Bulk Upload Successful: ${addedCount} orders added.`);
-            initDashboard();
+                renderBulkDraft();
+                showToast(`${bulkDraft.length} rows loaded. Review and edit before placing.`);
+            } catch (err) {
+                alert('Could not read the bulk order file. Please use the provided template.');
+                console.error(err);
+            }
         };
         reader.readAsArrayBuffer(file);
     }
@@ -904,6 +1363,7 @@
                 order.status = 'Pending';
                 showToast(`Order #${orderId} reset back to Pending!`);
             }
+            saveAppData();
             initDashboard();
         }
     }
@@ -918,14 +1378,15 @@
         }
 
         if (displayOrders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No matching store orders found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No matching store orders found.</td></tr>';
             return;
         }
 
         tbody.innerHTML = displayOrders.map(o => `
             <tr>
-                <td>${o.date}</td>
+                <td class="date-display">${formatDateDMY(o.date)}</td>
                 <td><strong>#${o.id}</strong></td>
+                <td>${o.itemCode || '—'}</td>
                 <td>${o.itemName}</td>
                 <td>${o.origin}</td>
                 <td>${o.uom}</td>
@@ -1034,6 +1495,7 @@
             <tr>
                 <th>Date</th>
                 <th>Order ID</th>
+                <th>Item Code</th>
                 <th>Item Name</th>
                 <th>Origin</th>
                 <th>UOM</th>
@@ -1049,12 +1511,13 @@
         }
 
         if (orders.length === 0) {
-            modalBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No orders found.</td></tr>';
+            modalBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No orders found.</td></tr>';
         } else {
             modalBody.innerHTML = orders.map(o => `
                 <tr>
-                    <td>${o.date}</td>
+                    <td>${formatDateDMY(o.date)}</td>
                     <td>#${o.id}</td>
+                    <td>${o.itemCode || '—'}</td>
                     <td>${o.itemName}</td>
                     <td>${o.origin}</td>
                     <td>${o.uom}</td>
@@ -1151,7 +1614,8 @@
 
             return `
                 <tr>
-                    <td>${req.date}</td>
+                    <td class="date-display">${formatDateDMY(req.date)}</td>
+                    <td>${req.itemCode || '—'}</td>
                     <td><strong>${req.itemName}</strong></td>
                     <td>${req.origin}</td>
                     <td>${req.requestQty}</td>
@@ -1171,7 +1635,8 @@
             const unitPrice = cheapest ? getItemPrice(cheapest) : 0;
 
             return {
-                Date: req.date,
+                Date: formatDateDMY(req.date),
+                "Item Code": req.itemCode || '',
                 "Item Name": req.itemName,
                 Origin: req.origin,
                 Quantity: req.requestQty,
@@ -1194,13 +1659,35 @@
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            masterData = XLSX.utils.sheet_to_json(sheet);
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const uploaded = XLSX.utils.sheet_to_json(sheet, { defval: '' })
+                    .map(normalizeMasterRow)
+                    .filter(row => row['Item Code'] || row['Item Name']);
 
-            showToast("Master Catalog Sheet Updated Successfully!");
-            initDashboard();
+                if (!uploaded.length) {
+                    alert('The uploaded master sheet has no usable item rows.');
+                    return;
+                }
+
+                masterData = uploaded;
+                saveAppData();
+
+                // Rebuild every dependent UI from the new master list.
+                populateDatalist();
+                populateFilters();
+                renderItemsTable(masterData);
+                renderSupplierTable();
+                renderBulkDraft();
+
+                showToast(`Master Catalog Updated: ${masterData.length} items loaded. Store order item list refreshed.`);
+                initDashboard();
+            } catch (err) {
+                alert('Could not read the master sheet. Please check the Excel/CSV format.');
+                console.error(err);
+            }
         };
         reader.readAsArrayBuffer(file);
     }
