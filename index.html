@@ -526,6 +526,111 @@
             outline-offset: -2px;
         }
 
+    
+        /* Store Order Table - restore full left/right columns */
+        #order-tracker-tab .table-wrapper,
+        #order-tracker-tab .table-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: visible !important;
+            box-sizing: border-box !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #order-tracker-tab table {
+            width: 100% !important;
+            min-width: 1050px !important;
+            table-layout: auto !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+        }
+
+        #order-tracker-tab table th,
+        #order-tracker-tab table td {
+            white-space: nowrap !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Keep the first and last columns visible inside the scroll area */
+        #order-tracker-tab table th:first-child,
+        #order-tracker-tab table td:first-child {
+            padding-left: 14px !important;
+        }
+
+        #order-tracker-tab table th:last-child,
+        #order-tracker-tab table td:last-child {
+            padding-right: 14px !important;
+        }
+
+        /* Prevent the page itself from being pushed wider than the viewport */
+        #order-tracker-tab {
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+        }
+
+    
+        /* STORE REQUEST & QUOTES - FINAL TABLE FIX */
+        #store-request-quotes-tab {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+        }
+
+        #store-request-quotes-tab .table-wrapper,
+        #store-request-quotes-tab .table-container,
+        #store-request-quotes-tab .table-responsive {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: visible !important;
+            box-sizing: border-box !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+        #store-request-quotes-tab table {
+            min-width: 1250px !important;
+            width: max-content !important;
+            max-width: none !important;
+            table-layout: auto !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+        }
+
+        #store-request-quotes-tab th,
+        #store-request-quotes-tab td {
+            white-space: nowrap !important;
+            box-sizing: border-box !important;
+            padding: 12px 14px !important;
+        }
+
+        #store-request-quotes-tab th:nth-child(1),
+        #store-request-quotes-tab td:nth-child(1) { min-width: 150px !important; }
+
+        #store-request-quotes-tab th:nth-child(2),
+        #store-request-quotes-tab td:nth-child(2) { min-width: 110px !important; }
+
+        #store-request-quotes-tab th:nth-child(3),
+        #store-request-quotes-tab td:nth-child(3) { min-width: 240px !important; }
+
+        #store-request-quotes-tab th:nth-child(4),
+        #store-request-quotes-tab td:nth-child(4) { min-width: 140px !important; }
+
+        #store-request-quotes-tab th:nth-child(5),
+        #store-request-quotes-tab td:nth-child(5) { min-width: 70px !important; }
+
+        #store-request-quotes-tab th:nth-child(6),
+        #store-request-quotes-tab td:nth-child(6) { min-width: 80px !important; }
+
+        #store-request-quotes-tab th:nth-child(7),
+        #store-request-quotes-tab td:nth-child(7) { min-width: 190px !important; }
+
+        #store-request-quotes-tab th:nth-child(8),
+        #store-request-quotes-tab td:nth-child(8) { min-width: 150px !important; }
+
+        #store-request-quotes-tab th:nth-child(9),
+        #store-request-quotes-tab td:nth-child(9) { min-width: 150px !important; }
+
     </style>
 </head>
 <body>
@@ -763,7 +868,7 @@
                         <button class="btn" style="padding:6px 12px; font-size:12px;" onclick="resetDateFilter()">Show All Dates</button>
                     </div>
                 </div>
-                <table>
+                <div class="table-wrapper"><table>
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -781,7 +886,7 @@
                     <tbody id="ordersTableBody">
                         <tr><td colspan="10" style="text-align:center;">No active orders found.</td></tr>
                     </tbody>
-                </table>
+                </table></div>
             </div>
         </div>
 
@@ -846,7 +951,7 @@
                     <thead>
                         <tr>
                             <th>Date (DD-MM-YYYY)</th>
-                            <th>Item Name</th>
+                            <th>Item Code</th><th>Item Name</th>
                             <th>Origin</th>
                             <th>Qty</th>
                             <th>UOM</th>
