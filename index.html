@@ -448,6 +448,84 @@
             }
         }
 
+    
+        .shared-master-panel {
+            display: none;
+            margin: 10px 0 0;
+            padding: 10px 12px;
+            background: #f7fbff;
+            border: 1px solid #d8eaf7;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #42647a;
+        }
+        .shared-master-panel strong { color: #245b7a; }
+
+    
+        /* Manual Store Order - Item Name Autocomplete */
+        .item-name-suggestions {
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 0;
+            right: 0;
+            z-index: 9999;
+            display: none;
+            max-height: 240px;
+            overflow-y: auto;
+            background: #ffffff;
+            border: 1px solid #d8dee6;
+            border-radius: 8px;
+            box-shadow: 0 8px 22px rgba(16, 24, 40, 0.14);
+        }
+
+        .item-name-suggestion {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+            padding: 10px 12px;
+            border: 0;
+            border-bottom: 1px solid #eef1f4;
+            background: #fff;
+            text-align: left;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .item-name-suggestion:last-child {
+            border-bottom: 0;
+        }
+
+        .item-name-suggestion:hover,
+        .item-name-suggestion.active {
+            background: #f0f7fc;
+        }
+
+        .item-name-suggestion-name {
+            font-weight: 600;
+            color: #243b53;
+        }
+
+        .item-name-suggestion-meta {
+            color: #667085;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .item-name-no-results {
+            padding: 12px;
+            color: #667085;
+            font-size: 12px;
+        }
+
+    
+        .item-name-suggestion.active {
+            background: #eaf4fb;
+            outline: 2px solid #3498db;
+            outline-offset: -2px;
+        }
+
     </style>
 </head>
 <body>
@@ -518,7 +596,12 @@
 <div class="main-wrapper">
     <header>
         <h1 id="pageTitle">Executive Dashboard</h1>
-        <div class="header-actions"><span class="header-status" id="masterStatus">Master list: 0 items</span><div id="uploadMasterContainer">
+        <div class="header-actions"><span class="header-status" id="masterStatus">Master list: 0 items</span><div id="sharedMasterContainer" style="display:flex;gap:6px;align-items:center;">
+            <button id="exportMasterBtn" class="btn btn-small btn-outline" onclick="exportSharedMasterList()" style="display:none;">⬇ Share Master List</button>
+            <label id="importMasterLabel" for="sharedMasterFile" class="btn btn-small btn-outline" style="display:none;cursor:pointer;">⬆ Load Master List</label>
+            <input type="file" id="sharedMasterFile" accept=".json" style="display:none;" onchange="importSharedMasterList(event)">
+        </div>
+        <div id="uploadMasterContainer">
             <label for="excelFile" class="btn btn-green" style="font-size:13px; cursor:pointer;">📂 Upload Master Sheet</label>
             <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" style="display:none;" onchange="handleMasterFileUpload(event)">
             </div></div>
@@ -622,7 +705,10 @@
                     </div>
                     <div class="form-group">
                         <label>Item Name (Auto from Code / Search Master)</label>
-                        <input type="text" id="orderItemInput" list="masterItemsList" class="form-control" placeholder="Type or Select Item..." oninput="autoFillItemDetails()" onchange="autoFillItemDetails()">
+                        <div style="position:relative;">
+                            <input type="text" id="orderItemInput" class="form-control" autocomplete="off" placeholder="Type item name..." oninput="showItemNameSuggestions(true)" onfocus="showItemNameSuggestions(true)" onkeydown="return handleItemNameSuggestionKeydown(event)">
+                            <div id="orderItemSuggestions" class="item-name-suggestions"></div>
+                        </div>
                         <datalist id="masterItemsList"></datalist>
                         <datalist id="masterItemCodesList"></datalist>
                     </div>
@@ -1021,6 +1107,8 @@
     }
 
     function applyRolePermissions(user) {
+        updateMasterSharingControls(user);
+
         const sidebarItems = document.querySelectorAll('#sidebarNavList .nav-item');
         const uploadMasterBtn = document.getElementById('uploadMasterContainer');
 
@@ -1160,6 +1248,235 @@
             codeList.appendChild(option);
         });
     }
+
+
+    // ITEM NAME AUTOCOMPLETE - reliable mouse + keyboard selection
+    let itemSuggestionIndex = -1;
+    window.currentItemNameSuggestions = [];
+
+    function getItemNameMatches() {
+        const input = document.getElementById('orderItemInput');
+        if (!input) return [];
+
+        const query = input.value.trim().toLowerCase();
+
+        return masterData
+            .filter(item => {
+                const name = String(item['Item Name'] || '').trim();
+                return name && (!query || name.toLowerCase().includes(query));
+            })
+            .filter((item, index, arr) =>
+                index === arr.findIndex(x =>
+                    String(x['Item Name'] || '').trim().toLowerCase() ===
+                    String(item['Item Name'] || '').trim().toLowerCase()
+                )
+            )
+            .slice(0, 30);
+    }
+
+    function showItemNameSuggestions(resetIndex = true) {
+        const input = document.getElementById('orderItemInput');
+        const box = document.getElementById('orderItemSuggestions');
+        if (!input || !box) return;
+
+        const matches = getItemNameMatches();
+        window.currentItemNameSuggestions = matches;
+
+        if (resetIndex) itemSuggestionIndex = -1;
+
+        if (!matches.length) {
+            box.innerHTML = input.value.trim()
+                ? '<div class="item-name-no-results">No matching item found in the Master List.</div>'
+                : '';
+            box.style.display = input.value.trim() ? 'block' : 'none';
+            return;
+        }
+
+        box.innerHTML = matches.map((item, index) => {
+            const name = escapeHtml(item['Item Name'] || '');
+            const code = escapeHtml(item['Item Code'] || '');
+            const uom = escapeHtml(item.UOM || '');
+            const origin = escapeHtml(item.Origin || '');
+
+            return `
+                <div
+                    class="item-name-suggestion ${index === itemSuggestionIndex ? 'active' : ''}"
+                    data-index="${index}"
+                    onmousedown="event.preventDefault(); selectItemNameSuggestion(${index});"
+                >
+                    <span class="item-name-suggestion-name">${name}</span>
+                    <span class="item-name-suggestion-meta">
+                        ${code ? 'Code: ' + code : ''}
+                        ${uom ? ' | UOM: ' + uom : ''}
+                        ${origin ? ' | ' + origin : ''}
+                    </span>
+                </div>
+            `;
+        }).join('');
+
+        box.style.display = 'block';
+    }
+
+    function handleItemNameSuggestionKeydown(event) {
+        const box = document.getElementById('orderItemSuggestions');
+        const input = document.getElementById('orderItemInput');
+        const suggestions = window.currentItemNameSuggestions || [];
+
+        if (!input || !box) return true;
+
+        // Always handle Enter while Item Name autocomplete is active.
+        if (event.key === 'Enter') {
+            if (box.style.display === 'block' && suggestions.length > 0) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const index = itemSuggestionIndex >= 0
+                    ? itemSuggestionIndex
+                    : (suggestions.length === 1 ? 0 : 0);
+
+                selectItemNameSuggestion(index);
+                return false;
+            }
+
+            return true;
+        }
+
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (!suggestions.length || box.style.display !== 'block') {
+                showItemNameSuggestions(false);
+            }
+
+            const current = window.currentItemNameSuggestions || [];
+            if (current.length) {
+                itemSuggestionIndex =
+                    itemSuggestionIndex < current.length - 1
+                        ? itemSuggestionIndex + 1
+                        : 0;
+
+                showItemNameSuggestions(false);
+                highlightItemSuggestion();
+            }
+
+            return false;
+        }
+
+        if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const current = window.currentItemNameSuggestions || [];
+            if (current.length) {
+                itemSuggestionIndex =
+                    itemSuggestionIndex > 0
+                        ? itemSuggestionIndex - 1
+                        : current.length - 1;
+
+                showItemNameSuggestions(false);
+                highlightItemSuggestion();
+            }
+
+            return false;
+        }
+
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            box.style.display = 'none';
+            itemSuggestionIndex = -1;
+            return false;
+        }
+
+        return true;
+    }
+
+    function highlightItemSuggestion() {
+        const box = document.getElementById('orderItemSuggestions');
+        if (!box) return;
+
+        box.querySelectorAll('.item-name-suggestion').forEach((row, index) => {
+            row.classList.toggle('active', index === itemSuggestionIndex);
+        });
+
+        const active = box.querySelector('.item-name-suggestion.active');
+        if (active) active.scrollIntoView({ block: 'nearest' });
+    }
+
+    function selectItemNameSuggestion(index) {
+        const item = (window.currentItemNameSuggestions || [])[index];
+        if (!item) return;
+
+        const itemInput = document.getElementById('orderItemInput');
+        const codeInput = document.getElementById('orderItemCodeInput');
+        const originSelect = document.getElementById('orderOriginSelect');
+        const uomInput = document.getElementById('orderUomInput');
+        const box = document.getElementById('orderItemSuggestions');
+
+        itemInput.value = item['Item Name'] || '';
+        codeInput.value = item['Item Code'] || '';
+        uomInput.value = item.UOM || '';
+
+        const sameNameItems = masterData.filter(m =>
+            String(m['Item Name'] || '').trim().toLowerCase() ===
+            String(item['Item Name'] || '').trim().toLowerCase()
+        );
+
+        const origins = [...new Set(
+            sameNameItems.map(m => String(m.Origin || '').trim()).filter(Boolean)
+        )];
+
+        originSelect.innerHTML = '<option value="">Select Origin...</option>';
+
+        origins.forEach(origin => {
+            const option = document.createElement('option');
+            option.value = origin;
+            option.textContent = origin;
+            originSelect.appendChild(option);
+        });
+
+        if (item.Origin && origins.includes(item.Origin)) {
+            originSelect.value = item.Origin;
+        } else if (origins.length === 1) {
+            originSelect.value = origins[0];
+        }
+
+        if (typeof autoFillUOMFromOrigin === 'function') {
+            autoFillUOMFromOrigin();
+        }
+
+        itemSuggestionIndex = -1;
+        window.currentItemNameSuggestions = [];
+        box.innerHTML = '';
+        box.style.display = 'none';
+
+        // Return focus to the Item Name field after selection.
+        itemInput.focus();
+        itemInput.setSelectionRange(itemInput.value.length, itemInput.value.length);
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // Close suggestions only when clicking outside the autocomplete.
+    document.addEventListener('mousedown', function(event) {
+        const input = document.getElementById('orderItemInput');
+        const box = document.getElementById('orderItemSuggestions');
+
+        if (!input || !box) return;
+
+        if (!input.contains(event.target) && !box.contains(event.target)) {
+            box.style.display = 'none';
+            itemSuggestionIndex = -1;
+        }
+    });
 
     function autoFillFromItemCode() {
         const code = document.getElementById('orderItemCodeInput').value.trim();
@@ -1653,6 +1970,109 @@
         XLSX.writeFile(workbook, "Light_Fields_Cheapest_Quotes.xlsx");
     }
 
+
+    // SHARED MASTER LIST
+    // A standalone HTML file cannot synchronize localStorage between different
+    // computers/browsers. Admin can export the latest master list to a small
+    // JSON file, then Store Keeper loads that file. This keeps the same system
+    // usable without requiring a server/database.
+    function exportSharedMasterList() {
+        if (!masterData.length) {
+            alert('There is no Master List to share. Please upload the Master List first.');
+            return;
+        }
+
+        const payload = {
+            app: 'Light Fields Foodstuff Management System',
+            type: 'MASTER_LIST',
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            masterData: masterData
+        };
+
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+            type: 'application/json'
+        });
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const date = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `Light_Fields_Master_List_${date}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        showToast(`Master List shared successfully: ${masterData.length} items.`);
+    }
+
+    function importSharedMasterList(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const payload = JSON.parse(e.target.result);
+
+                if (!payload || payload.type !== 'MASTER_LIST' || !Array.isArray(payload.masterData)) {
+                    throw new Error('Invalid Master List sharing file.');
+                }
+
+                const imported = payload.masterData
+                    .map(normalizeMasterRow)
+                    .filter(row => row['Item Code'] || row['Item Name']);
+
+                if (!imported.length) {
+                    throw new Error('The shared Master List contains no valid items.');
+                }
+
+                masterData = imported;
+                saveAppData();
+
+                // Refresh all Store Keeper-facing Master List lookups immediately.
+                populateDatalist();
+                window.currentItemNameSuggestions = [];
+                populateFilters();
+                renderItemsTable(masterData);
+                renderSupplierTable();
+                renderBulkDraft();
+                updateMasterStatus();
+                initDashboard();
+
+                const exportedAt = payload.exportedAt
+                    ? new Date(payload.exportedAt).toLocaleString()
+                    : 'unknown date';
+
+                showToast(`Master List loaded successfully: ${masterData.length} items. Updated ${exportedAt}.`);
+            } catch (err) {
+                alert('Unable to load the shared Master List. Please select the JSON file exported by Admin.');
+                console.error(err);
+            } finally {
+                event.target.value = '';
+            }
+        };
+
+        reader.readAsText(file);
+    }
+
+    function updateMasterSharingControls(user) {
+        const exportBtn = document.getElementById('exportMasterBtn');
+        const importLabel = document.getElementById('importMasterLabel');
+
+        if (user === 'Admin') {
+            if (exportBtn) exportBtn.style.display = 'inline-flex';
+            if (importLabel) importLabel.style.display = 'none';
+        } else if (user === 'Amir') {
+            if (exportBtn) exportBtn.style.display = 'none';
+            if (importLabel) importLabel.style.display = 'inline-flex';
+        } else {
+            if (exportBtn) exportBtn.style.display = 'none';
+            if (importLabel) importLabel.style.display = 'none';
+        }
+    }
+
     function handleMasterFileUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -1681,8 +2101,9 @@
                 renderItemsTable(masterData);
                 renderSupplierTable();
                 renderBulkDraft();
+                updateMasterStatus();
 
-                showToast(`Master Catalog Updated: ${masterData.length} items loaded. Store order item list refreshed.`);
+                showToast(`Master Catalog Updated: ${masterData.length} items loaded. Click 'Share Master List' so the Store Keeper can load the latest catalog.`);
                 initDashboard();
             } catch (err) {
                 alert('Could not read the master sheet. Please check the Excel/CSV format.');
