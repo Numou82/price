@@ -352,7 +352,7 @@
         .bulk-grid input, .bulk-grid select { width:100%; }
         .order-actions { display:flex; gap:8px; flex-wrap:wrap; }
         .btn-outline { background:#fff; color:var(--primary); border:1px solid #cfd6de; }
-        .btn-danger { background:#e74c3c; }
+        .btn-danger { background:#e74c3c; color: white; }
         .btn-small { padding:6px 10px; font-size:12px; }
         .empty-state { padding:28px; text-align:center; color:#7f8c8d; }
         .table-container table { min-width: 900px; }
@@ -1790,6 +1790,16 @@
         }
     }
 
+    // DELETE ORDER FUNCTIONALITY
+    function deleteOrder(orderId) {
+        if (confirm(`Are you sure you want to delete order #${orderId}?`)) {
+            ordersList = ordersList.filter(o => o.id !== orderId);
+            saveAppData();
+            showToast(`Order #${orderId} deleted successfully.`);
+            initDashboard();
+        }
+    }
+
     function renderOrdersTable() {
         const tbody = document.getElementById('ordersTableBody');
         const filterDate = document.getElementById('filterOrderDate').value;
@@ -1816,9 +1826,12 @@
                 <td>${o.receivedQty}</td>
                 <td><span class="badge ${o.status === 'Received' ? 'badge-green' : 'badge-orange'}">${o.status}</span></td>
                 <td>
-                    ${o.status === 'Pending' 
-                        ? `<button class="btn btn-green" style="padding:5px 12px; font-size:12px;" onclick="toggleOrderStatus(${o.id})">Mark Received</button>` 
-                        : `<button class="btn btn-orange" style="padding:5px 12px; font-size:12px;" onclick="toggleOrderStatus(${o.id})">↩ Undo / Mark Pending</button>`}
+                    <div style="display:flex; gap:5px; align-items:center;">
+                        ${o.status === 'Pending' 
+                            ? `<button class="btn btn-green" style="padding:5px 12px; font-size:12px;" onclick="toggleOrderStatus(${o.id})">Mark Received</button>` 
+                            : `<button class="btn btn-orange" style="padding:5px 12px; font-size:12px;" onclick="toggleOrderStatus(${o.id})">↩ Undo / Mark Pending</button>`}
+                        <button class="btn btn-danger" style="padding:5px 10px; font-size:12px;" onclick="deleteOrder(${o.id})" title="Delete Order">🗑 Delete</button>
+                    </div>
                 </td>
             </tr>
         `).join('');
